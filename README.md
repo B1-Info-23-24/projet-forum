@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/J7fVND2K)
+ 
+<p align="center">
+  <img src="images/img.png" alt="Your image alt text" width="300">
+</p>
+ 
+<a name="readme-top"></a>
+ 
+=======
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/J7fVND2K)
 
 <p align="center">
@@ -9,7 +19,7 @@
 <a name="readme-top"></a>
 
 # Forum 👋
-
+ 
 The aim of this project is to provide a space where users
 
 can register, take part in discussions and manage their personal profile.
@@ -17,7 +27,7 @@ can register, take part in discussions and manage their personal profile.
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 ## Index
-
+ 
 - [Index](#index)
 
 - [Project Overview](#project-overview)
@@ -145,4 +155,25 @@ This platform consists of five compartments first the first section with the mos
 [Go-url]: https://go.dev/
 [JS]: https://img.shields.io/badge/JavaScript-grey?style=for-the-badge&logo=javascript
 [JS-url]: https://www.javascript.com/
+[product-screenshot]: images/screenshot.png
+
+
+<!-- (Markdown img link) : -->
+
+[Html]: https://img.shields.io/badge/HTML5-grey?style=for-the-badge&logo=html5
+[Html-url]: https://www.w3schools.com/html/
+
+[Css]: https://img.shields.io/badge/CSS-grey?style=for-the-badge&logo=css3&logoColor=blue
+[Css-url]: https://www.w3schools.com/css/
+
+[Go]: https://img.shields.io/badge/Go-grey?style=for-the-badge&logo=go
+[Go-url]: https://go.dev/
+
+
+
+[JS]:  https://img.shields.io/badge/JavaScript-grey?style=for-the-badge&logo=javascript
+[JS-url]: https://www.javascript.com/
+
+
+>>>>>>> origin/dev
 [product-screenshot]: images/screenshot.png
