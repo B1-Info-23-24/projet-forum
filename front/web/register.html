@@ -12,7 +12,7 @@
             <a href="#" class="back-button">&larr;</a>
             <h1>Inscription</h1>
         </div>
-        <form id="registerForm" action="/users/create" method="POST">
+        <form id="registerForm" method="POST">
             <div class="form-group">
                 <label for="name">Nom:</label>
                 <input type="text" id="name" name="name" required>
@@ -33,17 +33,20 @@
         function registerUser(event) {
             event.preventDefault();
             const formData = new FormData(document.getElementById('registerForm'));
-            fetch('/users/create', {
+            fetch('http://localhost:8181/users/create', {
                 method: 'POST',
                 body: formData
             })
             .then(response => {
+                console.log(response)
                 if (response.ok) {
                     alert('Inscription réussie');
                     window.location.href = "/"; // Redirection vers la page de connexion après inscription réussie
                 } else {
-                    alert('Erreur lors de l\'inscription');
-                }
+                    response.text().then(text => {
+                alert('Erreur lors de l\'inscription : ' + text);
+            });
+        }
             })
             .catch(error => console.error('Erreur:', error));
         }
