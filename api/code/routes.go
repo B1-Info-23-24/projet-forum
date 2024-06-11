@@ -11,7 +11,7 @@ func SetupRoutes() {
 	//http.HandleFunc("/profile", profile)
 	http.HandleFunc("/profile/update", updateProfile)
 	http.HandleFunc("/profile/delete", deleteUser)
-	//http.HandleFunc("/home_connected", homeConnected)
+	http.HandleFunc("/home_connected", homeConnected)
 	http.HandleFunc("/post/create", createPost)
 	http.HandleFunc("/post/update", updatePost)
 	http.HandleFunc("/post/delete", deletePost)
