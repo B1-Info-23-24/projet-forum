@@ -2,11 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
-	"html/template"
 	"log"
 	"net/http"
 	"strconv"
+	"text/template"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -49,7 +48,7 @@ func main() {
 	http.HandleFunc("/register", serveRegisterForm)
 	http.HandleFunc("/users/create", createUser)
 	http.HandleFunc("/login", login)
-	http.HandleFunc("/profile", profile)
+	// http.HandleFunc("/profile", profile)
 	http.HandleFunc("/profile/update", updateProfile)
 	http.HandleFunc("/profile/delete", deleteUser)
 	http.HandleFunc("/home_connected", homeConnected)
@@ -59,7 +58,7 @@ func main() {
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	http.HandleFunc("/users", getUsers)
+	// http.HandleFunc("/users", getUsers)
 
 	log.Println("Serveur démarré sur le port 8080")
 	http.ListenAndServe(":8080", nil)
@@ -73,33 +72,33 @@ func serveRegisterForm(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 }
 
-func getUsers(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query("SELECT id, name, email FROM users")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+// func getUsers(w http.ResponseWriter, r *http.Request) {
+// 	rows, err := db.Query("SELECT id, name, email FROM users")
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer rows.Close()
 
-	users := []User{}
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		users = append(users, user)
-	}
+// 	users := []User{}
+// 	for rows.Next() {
+// 		var user User
+// 		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		users = append(users, user)
+// 	}
 
-	jsonResponse, err := json.Marshal(users)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+// 	jsonResponse, err := json.Marshal(users)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.Write(jsonResponse)
+// }
 
 func login(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
@@ -175,36 +174,36 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
-func profile(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
-		return
-	}
+// func profile(w http.ResponseWriter, r *http.Request) {
+// 	id := r.URL.Query().Get("id")
+// 	if id == "" {
+// 		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
+// 		return
+// 	}
 
-	var user User
-	err := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
+// 	var user User
+// 	err := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email)
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
+// 		} else {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		}
+// 		return
+// 	}
 
-	tmpl, err := template.ParseFiles("web/profile.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+// 	tmpl, err := template.ParseFiles("web/profile.html")
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
 
-	err = tmpl.Execute(w, user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
+// 	err = tmpl.Execute(w, user)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// }
 
 func updateProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
