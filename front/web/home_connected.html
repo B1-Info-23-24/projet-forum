@@ -88,6 +88,17 @@
             document.getElementById('userId').value = userId;
         }
     });
+    // Récupérez l'ID de l'utilisateur depuis le stockage local lors du chargement de la page
+document.addEventListener("DOMContentLoaded", function() {
+    const userID = localStorage.getItem("userID");
+
+    // Utilisez l'ID récupéré pour afficher le nom de l'utilisateur
+    if (userID) {
+        // Faites quelque chose avec userID, comme l'afficher dans un élément HTML
+        document.getElementById("userIDElement").innerText = userID;
+    }
+});
+
 </script>
 </body>
 </html>

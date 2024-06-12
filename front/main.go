@@ -24,7 +24,6 @@ func main() {
 	})
 
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-
 		if r.Method == http.MethodGet {
 			http.ServeFile(w, r, "web/login.html")
 			return

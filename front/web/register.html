@@ -12,57 +12,38 @@
             <a href="/login" class="back-button">&larr;</a>
             <h1>Inscription</h1>
         </div>
-        <form id="registerForm" action="/users/create" method="POST">
+        <form id="registerForm">
             <div class="form-group">
                 <label for="name">Nom:</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" required autocomplete="name">
             </div>
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Mot de passe:</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
                 <small id="passwordHelp" class="form-text">
                     Doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
                 </small>
             </div>
             <div class="form-group">
                 <label for="confirmPassword">Confirmer le mot de passe:</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
             </div>
             <button type="submit" class="button">S'inscrire</button>
             <a href="/login" class="button register-button">Connectez-vous</a>
         </form>
     </div>
     <script>
-        function registerUser(event) {
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
             event.preventDefault();
-            const formData = new FormData(document.getElementById('registerForm'));
-            fetch('http://localhost:8181/users/create', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert('Inscription réussie');
-                    window.location.href = "/"; // Redirection vers la page de connexion après inscription réussie
-                } else {
-                    alert('Erreur lors de l\'inscription');
-                }
-            })
-            .catch(error => console.error('Erreur:', error));
-        }
-
-        document.getElementById('registerForm').addEventListener('submit', registerUser);
-
-        document.getElementById('registerForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+            console.log('Form submitted'); // Log pour vérifier que la soumission du formulaire est interceptée
+            
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            // CNIL recommendations for passwords
             const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
 
             if (!passwordRegex.test(password)) {
@@ -76,20 +57,34 @@
             }
 
             const formData = new FormData(document.getElementById('registerForm'));
-    fetch('/users/create', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('Inscription réussie'); // Afficher un message de réussite
-            window.location.href = "/"; // Redirection vers la page de connexion après inscription réussie
-        } else {
-            alert('Erreur lors de l\'inscription'); // Afficher un message d'erreur
-        }
-    })
-    .catch(error => console.error('Erreur:', error));
-});
+            try {
+                const response = await fetch('/users/create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Response status:', response.status); // Log pour vérifier le statut de la réponse
+                
+                if (response.ok) {
+                    const data = await response.json(); // Récupérer les données JSON de la réponse
+                    console.log('Response data:', data); // Log pour vérifier les données de la réponse
+
+                    if (data && data.id) {
+                        localStorage.setItem('userID', data.id);
+                        alert('Inscription réussie');
+                        window.location.href = "/home";
+                    } else {
+                        alert('Erreur lors de l\'inscription : ID utilisateur non disponible.');
+                    }
+                } else {
+                    const errorText = await response.text(); // Récupérer le texte de l'erreur pour déboguer
+                    console.error('Error response:', errorText);
+                    alert('Erreur lors de l\'inscription');
+                }
+            } catch (error) {
+            //    console.error('Erreur:', error);
+            }
+        });
     </script>
 </body>
 </html>
