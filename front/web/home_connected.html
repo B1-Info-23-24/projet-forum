@@ -79,6 +79,54 @@
       <a href="#">Contactez-nous</a>
     </p>
   </footer>
+  <script>
+    function createPost(event) {
+        event.preventDefault();
+        const formData = new FormData(document.getElementById('postForm'));
+        fetch('http://localhost:8181/post/create', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Post créé avec succès');
+                // Rechargez les posts ici, par exemple, en appelant une fonction qui recharge les posts
+                loadPosts();
+            } else {
+                response.text().then(text => {
+                    alert('Erreur lors de la création du post : ' + text);
+                });
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+
+    document.getElementById('postForm').addEventListener('submit', createPost);
+
+    function loadPosts() {
+        fetch('http://localhost:8181/posts', {
+            method: 'GET',
+        })
+        .then(response => response.json())
+        .then(data => {
+            const postsContainer = document.querySelector('.posts');
+            postsContainer.innerHTML = '';
+            data.posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.classList.add('post');
+                postElement.innerHTML = `
+                    <p>${post.content}</p>
+                    <span class="post-user">Posté par ${post.user_name}</span>
+                `;
+                postsContainer.appendChild(postElement);
+            });
+        })
+        .catch(error => console.error('Erreur de chargement des posts:', error));
+    }
+
+    // Charger les posts au démarrage de la page
+    document.addEventListener('DOMContentLoaded', loadPosts);
+</script>
 </div>
 </body>
 </html>
