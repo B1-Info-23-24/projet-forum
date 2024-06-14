@@ -10,7 +10,7 @@
             position: fixed;
             bottom: 0;
             width: 100%;
-            background-color: #f8f9fa; /* Modifier cette couleur pour correspondre à celle du site */
+            background-color: #f8f9fa;
             text-align: center;
             padding: 10px 0;
             box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
@@ -41,7 +41,7 @@
             <div class="top-bar">
                 <input type="text" placeholder="Tapez ici pour chercher...">
                 <div class="user-info">
-                    <span class="username">{{.Name}}</span>
+                    <span class="name">{{.ID}}</span>
                     <button class="profile-button" onclick="location.href='/profile?id={{.ID}}'">Modifier le profil</button>
                     <button class="profile-button" onclick="location.href='/logout'">Déconnexion</button>
                 </div>
@@ -70,63 +70,61 @@
             <p>&copy; 2024 Motorum. Tous droits réservés.</p>
         </footer>
     </div>
-<div class="footer-container">
-  <footer class="footer">
-    <p>© 2024 Motorum. Tous droits réservés.</p>
-    <p>
-      <a href="#">Politique de confidentialité</a> |
-      <a href="#">Conditions d'utilisation</a> |
-      <a href="#">Contactez-nous</a>
-    </p>
-  </footer>
-  <script>
-    function createPost(event) {
-        event.preventDefault();
-        const formData = new FormData(document.getElementById('postForm'));
-        fetch('http://localhost:8181/post/create', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.ok) {
-                alert('Post créé avec succès');
-                // Rechargez les posts ici, par exemple, en appelant une fonction qui recharge les posts
-                loadPosts();
-            } else {
-                response.text().then(text => {
-                    alert('Erreur lors de la création du post : ' + text);
+    <div class="footer-container">
+        <footer class="footer">
+            <p>© 2024 Motorum. Tous droits réservés.</p>
+            <p>
+                <a href="#">Politique de confidentialité</a> |
+                <a href="#">Conditions d'utilisation</a> |
+                <a href="#">Contactez-nous</a>
+            </p>
+        </footer>
+    </div>
+    <script>
+        function createPost(event) {
+            event.preventDefault();
+            const formData = new FormData(document.getElementById('postForm'));
+            fetch('http://localhost:8181/post/create', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Post créé avec succès');
+                    loadPosts();
+                } else {
+                    response.text().then(text => {
+                        alert('Erreur lors de la création du post : ' + text);
+                    });
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        document.getElementById('postForm').addEventListener('submit', createPost);
+
+        function loadPosts() {
+            fetch('http://localhost:8181/posts', {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                const postsContainer = document.querySelector('.posts');
+                postsContainer.innerHTML = '';
+                data.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.classList.add('post');
+                    postElement.innerHTML = `
+                        <p>${post.content}</p>
+                        <span class="post-user">Posté par ${post.user_name}</span>
+                    `;
+                    postsContainer.appendChild(postElement);
                 });
-            }
-        })
-        .catch(error => console.error('Erreur:', error));
-    }
+            })
+            .catch(error => console.error('Erreur de chargement des posts:', error));
+        }
 
-    document.getElementById('postForm').addEventListener('submit', createPost);
-
-    function loadPosts() {
-        fetch('http://localhost:8181/posts', {
-            method: 'GET',
-        })
-        .then(response => response.json())
-        .then(data => {
-            const postsContainer = document.querySelector('.posts');
-            postsContainer.innerHTML = '';
-            data.posts.forEach(post => {
-                const postElement = document.createElement('div');
-                postElement.classList.add('post');
-                postElement.innerHTML = `
-                    <p>${post.content}</p>
-                    <span class="post-user">Posté par ${post.user_name}</span>
-                `;
-                postsContainer.appendChild(postElement);
-            });
-        })
-        .catch(error => console.error('Erreur de chargement des posts:', error));
-    }
-
-    // Charger les posts au démarrage de la page
-    document.addEventListener('DOMContentLoaded', loadPosts);
-</script>
-</div>
+        document.addEventListener('DOMContentLoaded', loadPosts);
+    </script>
 </body>
 </html>

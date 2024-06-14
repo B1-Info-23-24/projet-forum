@@ -29,7 +29,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/home_connected", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "web/home_connected.html")
 
 	})
