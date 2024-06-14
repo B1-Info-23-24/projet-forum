@@ -1,0 +1,100 @@
+body {
+	background-color: #f5f5f5;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+	margin: 0;
+	font-family: Arial, sans-serif;
+}
+
+.container {
+	background-color: #ffffff;
+	border: 1px solid #dddddd;
+	border-radius: 10px;
+	padding: 40px;
+	width: 100%;
+	max-width: 400px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+	color: #333333;
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+.photo-upload {
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+.photo-upload img {
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	border: 2px solid #dddddd;
+	margin-bottom: 10px;
+}
+
+.photo-upload input[type="file"] {
+	display: none;
+}
+
+.photo-upload label {
+	color: #007bff;
+	cursor: pointer;
+}
+
+.profile-section {
+	margin-bottom: 20px;
+}
+
+.profile-section label {
+	color: #333333;
+	display: block;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.profile-section input {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #dddddd;
+	border-radius: 5px;
+	background-color: #f9f9f9;
+	color: #333333;
+	box-sizing: border-box;
+}
+
+.profile-section input::placeholder {
+	color: #aaaaaa;
+}
+
+.update-button,
+.delete-button {
+	width: 100%;
+	padding: 10px;
+	border: none;
+	border-radius: 5px;
+	background-color: #007bff;
+	color: #ffffff;
+	font-size: 16px;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	margin-top: 10px;
+}
+
+.update-button:hover,
+.delete-button:hover {
+	background-color: #0056b3;
+}
+
+.delete-button {
+	background-color: #dc3545;
+}
+
+.delete-button:hover {
+	background-color: #c82333;
+}

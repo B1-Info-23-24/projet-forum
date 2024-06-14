@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/register.css">
+    <title>Inscription</title>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/login" class="back-button">&larr;</a>
+            <h1>Inscription</h1>
+        </div>
+        <form id="registerForm" action="/register" method="POST">
+            <div class="form-group">
+                <label for="name">Nom:</label>
+                <input type="text" id="name" name="name" placeholder="Nom" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe:</label>
+                <!-- <input type="password" id="password" name="password" placeholder="Mot de passe" required> -->
+								<input type="password" id="password" name="password" placeholder="Mot de passe" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="button">S'inscrire</button>
+            <div class="divider">ou</div>
+            <a href="/login" class="button login-button">Connectez-vous ici</a>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const registerForm = document.getElementById('registerForm');
+
+            registerForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await fetch('http://localhost:8181/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: name,
+                            email: email,
+                            password: password
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Erreur lors de l\'inscription');
+                    }
+
+                    alert('Inscription réussie ! Redirection vers la page de connexion.');
+                    window.location.href = '/login'
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
