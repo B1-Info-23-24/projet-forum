@@ -26,6 +26,15 @@ type User struct {
 	Password string `json:"password,omitempty"`
 }
 
+//	func enableCors(w *http.ResponseWriter, r *http.Request) {
+//		(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+//		(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+//		(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+//		if r.Method == http.MethodOptions {
+//			w.WriteHeader(http.StatusOK)
+//			return
+//		}
+//	}
 func serveRegisterForm(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		http.ServeFile(w, r, "web/register.html")
@@ -63,7 +72,12 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
+func login(w http.ResponseWriter, r *http.Request) {
+
+	// enableCors(&w, r)
+	if r.Method == http.MethodOptions {
+		return
+	}
 
 	if r.Method == http.MethodGet {
 		//http.ServeFile(w, r, "web/login.html")
@@ -274,7 +288,7 @@ func homeConnected(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("web/home_connected.html")
+	tmpl, err := template.ParseFiles("../front/web/home_connected.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
