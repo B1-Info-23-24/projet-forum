@@ -73,17 +73,7 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-
-	// enableCors(&w, r)
 	if r.Method == http.MethodOptions {
-		return
-	}
-
-	if r.Method == http.MethodGet {
-		//http.ServeFile(w, r, "web/login.html")
-		return
-	} else if r.Method != http.MethodPost {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -112,8 +102,101 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/home_connected?id="+strconv.Itoa(user.ID), http.StatusSeeOther)
+	// Envoyer une réponse JSON avec l'URL de redirection
+	redirectUrl := "/home_connected?id=" + strconv.Itoa(user.ID)
+	response := map[string]string{"redirectUrl": redirectUrl}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
+
+// func login(w http.ResponseWriter, r *http.Request) {
+
+// 	// enableCors(&w, r)
+// 	if r.Method == http.MethodOptions {
+// 		return
+// 	}
+
+// 	if r.Method == http.MethodGet {
+// 		//http.ServeFile(w, r, "web/login.html")
+// 		return
+// 	} else if r.Method != http.MethodPost {
+// 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+
+// 	email := r.FormValue("email")
+// 	password := r.FormValue("password")
+
+// 	if email == "" || password == "" {
+// 		http.Error(w, "L'email et le mot de passe sont requis", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	var user User
+// 	err := db.QueryRow("SELECT id, name, email, password FROM users WHERE email = ?", email).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			http.Error(w, "Utilisateur non trouvé", http.StatusUnauthorized)
+// 		} else {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		}
+// 		return
+// 	}
+
+// 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+// 	if err != nil {
+// 		http.Error(w, "Mot de passe incorrect", http.StatusUnauthorized)
+// 		return
+// 	}
+
+// 	http.Redirect(w, r, "/home_connected?id="+strconv.Itoa(user.ID), http.StatusSeeOther)
+// }
+
+// func createUser(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+
+// 	name := r.FormValue("name")
+// 	email := r.FormValue("email")
+// 	password := r.FormValue("password")
+
+// 	log.Println("Creating user:", name, email)
+// 	if name == "" || email == "" || password == "" {
+// 		http.Error(w, "Le nom, l'email et le mot de passe sont requis", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	log.Println("testtttttttttt 1")
+
+// 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	log.Println("testtttttttttt 2")
+
+// 	stmt, err := db.Prepare("INSERT INTO users(name, email, password) VALUES(?, ?, ?)")
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer stmt.Close()
+
+// 	log.Println("testtttttttttt 3")
+
+// 	_, err = stmt.Exec(name, email, string(hashedPassword))
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	log.Println("testtttttttttt 4")
+// 	log.Println("User created successfully:", name, email)
+// 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+// }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -131,15 +214,11 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("testtttttttttt 1")
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	log.Println("testtttttttttt 2")
 
 	stmt, err := db.Prepare("INSERT INTO users(name, email, password) VALUES(?, ?, ?)")
 	if err != nil {
@@ -148,15 +227,12 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stmt.Close()
 
-	log.Println("testtttttttttt 3")
-
 	_, err = stmt.Exec(name, email, string(hashedPassword))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	log.Println("testtttttttttt 4")
 	log.Println("User created successfully:", name, email)
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
@@ -288,7 +364,7 @@ func homeConnected(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("../front/web/home_connected.html")
+	tmpl, err := template.ParseFiles("web/home_connected.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
