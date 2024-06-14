@@ -41,8 +41,6 @@ type Like struct {
 
 var DB *sql.DB
 
-var jwtKey = []byte("fsn7687£PLOKJO§")
-
 type Claims struct {
 	Username string `json:"username"`
 	UserID   int    `json:"user_id"`
@@ -50,17 +48,18 @@ type Claims struct {
 }
 
 func InitDB() {
-	var err error
-	DB, err = sql.Open("sqlite3", "./data.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+    var err error
+    DB, err = sql.Open("sqlite3", "./data.db")
+    if err != nil {
+        log.Fatal(err)
+    }
 
-	createTables()
+    createTables()
 }
 
+
 func createTables() {
-	createUserTableQuery := `
+    createUserTableQuery := `
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
@@ -69,7 +68,7 @@ func createTables() {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`
 
-	createPostTableQuery := `
+    createPostTableQuery := `
     CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT NOT NULL,
@@ -78,7 +77,7 @@ func createTables() {
         FOREIGN KEY (user_id) REFERENCES users(id)
     );`
 
-	createCommentTableQuery := `
+    createCommentTableQuery := `
     CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT NOT NULL,
@@ -89,7 +88,7 @@ func createTables() {
         FOREIGN KEY (user_id) REFERENCES users(id)
     );`
 
-	createLikeTableQuery := `
+    createLikeTableQuery := `
     CREATE TABLE IF NOT EXISTS likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_id INTEGER NOT NULL,
@@ -99,51 +98,26 @@ func createTables() {
         FOREIGN KEY (user_id) REFERENCES users(id)
     );`
 
-	executeQuery(createUserTableQuery)
-	executeQuery(createPostTableQuery)
-	executeQuery(createCommentTableQuery)
-	executeQuery(createLikeTableQuery)
+    createSessionTableQuery := `
+    CREATE TABLE IF NOT EXISTS sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        session_token TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );`
+
+    executeQuery(createUserTableQuery)
+    executeQuery(createPostTableQuery)
+    executeQuery(createCommentTableQuery)
+    executeQuery(createLikeTableQuery)
+    executeQuery(createSessionTableQuery)
 }
+
 
 func executeQuery(query string) {
 	_, err := DB.Exec(query)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func GenerateJWT(userID int, username string) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
-	claims := &Claims{
-		Username: username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
-}
-
-func ValidateJWT(tokenString string) (*Claims, error) {
-	claims := &Claims{}
-
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !token.Valid {
-		return nil, err
-	}
-
-	return claims, nil
 }

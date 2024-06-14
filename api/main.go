@@ -2,8 +2,10 @@ package main
 
 import (
 	"api/code"
-	"github.com/gin-gonic/gin"
+	"time"
+
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -12,8 +14,17 @@ func main() {
 
 	r := gin.Default()
 
-	 // Configurer CORS pour autoriser toutes les origines (à ajuster en fonction de vos besoins)
-	 r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+    AllowOrigins:     []string{"http://http://localhost:8080/"},
+    AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+    AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+    AllowCredentials: true,
+    MaxAge:           12 * time.Hour,
+}))
+
+
+	// Configurer CORS pour autoriser toutes les origines (à ajuster en fonction de vos besoins)
+	// r.Use(cors.Default())
 
 	// User routes
 	r.POST("/register", api.Register)
@@ -21,7 +32,8 @@ func main() {
 
 	// Protected routes
 	authenticated := r.Group("/")
-	//authenticated.Use(api.Authenticate)
+	authenticated.Use(api.AuthMiddleware()) // Middleware d'authentification
+
 	{
 		// Post routes
 		authenticated.POST("/posts", api.CreatePost)

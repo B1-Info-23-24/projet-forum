@@ -1,7 +1,9 @@
 package api
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,11 +20,6 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-
-	// if len(user.Username) < 3 || len(user.Password) < 6 {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Username must be at least 3 characters and password at least 6 characters"})
-	// 	return
-	// }
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -42,90 +39,99 @@ func Register(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Registration successful"})
 }
-
 func Login(c *gin.Context) {
 	var loginData struct {
-		Identifier string `json:"email"`
-		Password   string `json:"password"`
+			Email    string `json:"email"`
+			Password string `json:"password"`
 	}
 
 	if err := c.ShouldBindJSON(&loginData); err != nil {
-		log.Println("Error binding JSON:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
 	}
 
-	// Vérifier si l'identifiant ou le mot de passe est vide
-	if loginData.Identifier == "" || loginData.Password == "" {
-		log.Println("Identifier or password is empty")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Identifier and password must not be empty"})
-		return
-	}
-
-	// Continuez avec le reste de votre logique de connexion ici...
-
-	log.Println("Login attempt with identifier:", loginData.Identifier)
-
-	var storedUser User
-	err := DB.QueryRow("SELECT id, username, email, password FROM users WHERE username = ? OR email = ?", loginData.Identifier, loginData.Identifier).Scan(&storedUser.ID, &storedUser.Username, &storedUser.Email, &storedUser.Password)
+	var user User
+	err := DB.QueryRow("SELECT id, username, email, password FROM users WHERE email = ?", loginData.Email).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
-		log.Println("Error fetching user:", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+			return
 	}
 
-	log.Println("User found:", storedUser.Username)
-
-	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(loginData.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginData.Password))
 	if err != nil {
-		log.Println("Password comparison failed:", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+			return
 	}
 
-	log.Println("Password comparison successful")
+	// Generate a secure random session token
+	sessionToken := generateSessionToken()
 
-	tokenString, err := GenerateJWT(storedUser.ID, storedUser.Username)
-	if err != nil {
-		log.Println("Error generating token:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-		return
+	// Store the session token in a secure session store (e.g., database)
+	if err := storeSessionToken(user.ID, sessionToken); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
+			return
 	}
 
-	// Réponse réussie avec un cookie HTTP contenant le token JWT
-	http.SetCookie(c.Writer, &http.Cookie{
-		SameSite: http.SameSiteLaxMode,
-		Name:     "session",
-		Value:    tokenString,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-	})
+	// Set the session token in a cookie
+	expiration := time.Now().Add(24 * time.Hour)
+	cookie := http.Cookie{
+			Name:     "session_token",
+			Value:    sessionToken,
+			Expires:  expiration,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			Path:     "/",
+	}
+
+	http.SetCookie(c.Writer, &cookie)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
-func Authenticate(c *gin.Context) {
-	cookie, err := c.Request.Cookie("token")
+
+func generateSessionToken() string {
+	token := make([]byte, 32)
+	_, err := rand.Read(token)
 	if err != nil {
-		if err == http.ErrNoCookie {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
+			panic(err)
+	}
+	return base64.URLEncoding.EncodeToString(token)
+}
+
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cookie, err := c.Cookie("session")
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
-		return
-	}
 
-	tokenStr := cookie.Value
-	claims, err := ValidateJWT(tokenStr)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
+		// Vérifier le token de session dans la base de données
+		var userID int
+		err = DB.QueryRow("SELECT user_id FROM sessions WHERE session_token = ?", cookie).Scan(&userID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
 
-	c.JSON(http.StatusOK, gin.H{"username": claims.Username})
+		// Récupérer les informations de l'utilisateur depuis la base de données
+		var user User
+		err = DB.QueryRow("SELECT id, username, email FROM users WHERE id = ?", userID).Scan(&user.ID, &user.Username, &user.Email)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			c.Abort()
+			return
+		}
+
+		// Ajouter les informations de l'utilisateur au contexte s'il est authentifié
+		c.Set("user", user)
+
+		c.Next()
+	}
 }
+
 
 func CreatePost(c *gin.Context) {
 	var post Post
@@ -175,33 +181,6 @@ func CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
-}
-
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		cookie, err := c.Request.Cookie("token")
-		if err != nil {
-			if err == http.ErrNoCookie {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
-				c.Abort()
-				return
-			}
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		tokenStr := cookie.Value
-		claims, err := ValidateJWT(tokenStr)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		c.Set("user_id", claims.UserID)
-		c.Next()
-	}
 }
 
 func CORSMiddleware() gin.HandlerFunc {
