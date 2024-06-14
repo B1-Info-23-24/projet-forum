@@ -1,7 +1,8 @@
 package main
 
 import (
-	"api/code"
+	api "api/code"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -45,5 +46,5 @@ func main() {
 	// Public search route
 	r.GET("/search", api.SearchPosts)
 
-	r.Run(":8080")
+	r.Run(":8181")
 }

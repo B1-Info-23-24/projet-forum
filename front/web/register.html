@@ -30,5 +30,33 @@
             <a href="/login" class="button login-button">Connectez-vous ici</a>
         </form>
     </div>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const formData = new FormData(document.getElementById('registerForm'));
+    const data = Object.fromEntries(formData.entries());
+
+    fetch('http://localhost:8181/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Inscription réussie');
+            window.location.href = "/login"; // Redirection après inscription réussie
+        } else {
+            response.json().then(data => {
+                alert('Erreur lors de l\'inscription : ' + data.error);
+            });
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+});
+
+    </script>
 </body>
 </html>
+    

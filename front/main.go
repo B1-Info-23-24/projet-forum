@@ -42,7 +42,7 @@ func main() {
 	})
 
 	// Lancer le serveur
-	if err := router.Run(":8081"); err != nil {
+	if err := router.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}
 }
