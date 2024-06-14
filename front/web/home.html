@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motorum</title>
-    <link rel="stylesheet" href="/static/home.css">
+    <link rel="stylesheet" href="../static/home.css">
 </head>
 <body>
     <div class="container">
@@ -32,10 +32,65 @@
                 <button class="profile-button" onclick="location.href='/login'">Connexion</button>
             </div>
             <div class="post-box">
-                <textarea placeholder="Partageons ce qui se passe dans votre esprit..." disabled></textarea>
+                <textarea placeholder="Partageons ce qui se passe dans votre esprit..."></textarea>
             </div>
-            <div class="posts" id="posts">
-                <!-- Les posts seront chargés ici -->
+            <div class="posts">
+                <div class="post">
+                    <div class="author">Pavel Gvay • il y a 3 semaines</div>
+                    <div class="text">Salut tout le monde ! J'espère que vous allez bien. J'ai récemment vu une superbe Ducati Panigale V4, et je dois dire que je suis vraiment tenté. Qu'est-ce que vous en pensez ?</div>
+                    <div class="tags">
+                        <span class="tag">Panigale</span>
+                        <span class="tag">Moto</span>
+                        <span class="tag">Ducati</span>
+                    </div>
+                    <div class="stats">
+                        <span>651,324 Vues</span>
+                        <span>36,654 J'aime</span>
+                        <span>56 commentaires</span>
+                    </div>
+                </div>
+                <div class="post">
+                    <div class="author">AR Jakir • il y a 3 jours</div>
+                    <div class="text">La Panigale V4 est incroyable ! C'est une bête de course. Je l'ai essayée une fois, et la puissance est juste phénoménale. Par contre, elle n'est pas très confortable pour les longues distances.</div>
+                    <div class="tags">
+                        <span class="tag">panigale</span>
+                        <span class="tag">Ducati</span>
+                        <span class="tag">Moto</span>
+                    </div>
+                    <div class="stats">
+                        <span>244,564 Vues</span>
+                        <span>10,920 J'aime</span>
+                        <span>184 commentaires</span>
+                    </div>
+                </div>
+                <div class="post">
+                    <div class="author">Mansurul Haque • il y a 1 semaines</div>
+                    <div class="text">Je suis d'accord, Sophie. La Panigale V4 est plus faite pour les circuits que pour les balades. Personnellement, je préfère les BMW GS pour les longs trajets. Elles sont beaucoup plus polyvalentes.</div>
+                    <div class="tags">
+                        <span class="tag">GS</span>
+                        <span class="tag">BMW</span>
+                        <span class="tag">Moto</span>
+                    </div>
+                    <div class="stats">
+                        <span>601,066 Vues</span>
+                        <span>24,753 J'aime</span>
+                        <span>209 commentaires</span>
+                    </div>
+                </div>
+                <div class="post">
+                    <div class="author">Michal Malewicz • il y a 2 semaines</div>
+                    <div class="text">Ah, les BMW GS ! C'est un choix solide pour le touring.</div>
+                    <div class="tags">
+                        <span class="tag">Moto</span>
+                        <span class="tag">GS</span>
+                        <span class="tag">BMW</span>
+                    </div>
+                    <div class="stats">
+                        <span>964,258 Vues</span>
+                        <span>64,755 J'aime</span>
+                        <span>44 commentaires</span>
+                    </div>
+                </div>
             </div>
         </main>
         <aside class="sidebar-right">
@@ -48,53 +103,5 @@
             <div class="ad">Je vend ma KTM 690 SM-C R, pour passer sur un roadster.</div>
         </aside>
     </div>
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>Motorum</h4>
-                <ul>
-                    <li><a href="#">Politique de confidentialité</a></li>
-                    <li><a href="#">Conditions d'utilisation</a></li>
-                    <li><a href="#">Contactez-nous</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 Motorum. Tous droits réservés.</p>
-        </div>
-    </footer>
-    <script>
-        async function loadPosts() {
-            try {
-                const response = await fetch('/posts');
-                const posts = await response.json();
-                const postsContainer = document.getElementById('posts');
-
-                postsContainer.innerHTML = '';
-
-                posts.forEach(post => {
-                    const postElement = document.createElement('div');
-                    postElement.classList.add('post');
-                    postElement.innerHTML = `
-                        <div class="author">${post.user_name} • ${new Date(post.created_at).toLocaleDateString()}</div>
-                        <div class="text">${post.content}</div>
-                        <div class="tags">
-                            ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                        </div>
-                        <div class="stats">
-                            <span>${post.views} Vues</span>
-                            <span>${post.likes} J'aime</span>
-                            <span>${post.comments} commentaires</span>
-                        </div>
-                    `;
-                    postsContainer.appendChild(postElement);
-                });
-            } catch (error) {
-                console.error('Error loading posts:', error);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', loadPosts);
-    </script>
 </body>
 </html>

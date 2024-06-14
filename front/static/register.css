@@ -1,4 +1,3 @@
-/* styles.css */
 body {
 	background-color: #1a1a1a;
 	display: flex;
@@ -82,4 +81,27 @@ body {
 
 .button:hover {
 	background-color: #f39c12;
+}
+
+.divider {
+	display: flex;
+	align-items: center;
+	text-align: center;
+	color: #ccc;
+	margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+	content: '';
+	flex: 1;
+	border-bottom: 1px solid #ccc;
+}
+
+.divider::before {
+	margin-right: .25em;
+}
+
+.divider::after {
+	margin-left: .25em;
 }

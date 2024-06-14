@@ -1,34 +1,48 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
+	router := gin.Default()
 
-	// Serve static files from the "static" directory
-	r.Static("/static", "./static")
+	// Servir les fichiers statiques (CSS, JS, images)
+	router.Static("/static", "./static")
 
-	// Load multiple HTML files
-	r.LoadHTMLGlob("./web/*")
+	// Routes pour les fichiers HTML
+	router.LoadHTMLGlob("web/*")
 
-	// Route to serve the home page
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "home.html", gin.H{})
+	router.GET("/", func(c *gin.Context) {
+		// Simuler des données utilisateur pour démonstration
+		data := gin.H{
+			"Name": "John Doe",
+			"ID":   1,
+		}
+		c.HTML(http.StatusOK, "home-connected.html", data)
 	})
 
-	// Route to serve the login page
-	r.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{})
+	router.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", nil)
 	})
 
-	// Route to serve the registration page
-	r.GET("/register", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "register.html", gin.H{})
+	router.GET("/home", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "home.html", nil)
 	})
 
-	r.Run(":8181")
+	router.GET("/register", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "register.html", nil)
+	})
+
+	router.GET("/profile", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "profile.html", nil)
+	})
+
+	// Lancer le serveur
+	if err := router.Run(":8081"); err != nil {
+		log.Fatal(err)
+	}
 }
