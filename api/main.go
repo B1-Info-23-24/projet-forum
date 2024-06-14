@@ -3,6 +3,7 @@ package main
 import (
 	"api/code"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 )
 
 func main() {
@@ -11,13 +12,16 @@ func main() {
 
 	r := gin.Default()
 
+	 // Configurer CORS pour autoriser toutes les origines (à ajuster en fonction de vos besoins)
+	 r.Use(cors.Default())
+
 	// User routes
 	r.POST("/register", api.Register)
 	r.POST("/login", api.Login)
 
 	// Protected routes
 	authenticated := r.Group("/")
-	authenticated.Use(api.Authenticate)
+	//authenticated.Use(api.Authenticate)
 	{
 		// Post routes
 		authenticated.POST("/posts", api.CreatePost)
@@ -45,5 +49,5 @@ func main() {
 	// Public search route
 	r.GET("/search", api.SearchPosts)
 
-	r.Run(":8080")
+	r.Run(":8181")
 }

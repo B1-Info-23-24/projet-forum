@@ -9,22 +9,58 @@
 <body>
     <div class="container">
         <div class="header">
-            <a href="#" class="back-button">&larr;</a>
+            <a href="/" class="back-button">&larr;</a>
             <h1>Connexion</h1>
         </div>
         <form id="loginForm" action="/login" method="POST">
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" placeholder="Email" required>
+                <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email">
             </div>
             <div class="form-group">
                 <label for="password">Mot de passe:</label>
-                <input type="password" id="password" name="password" placeholder="Mot de passe" required>
+                <input type="password" id="password" name="password" placeholder="Mot de passe" required autocomplete="current-password">
             </div>
             <button type="submit" class="button">Se connecter</button>
             <div class="divider">ou</div>
             <a href="/register" class="button register-button">Inscrivez-vous ici</a>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginForm = document.getElementById('loginForm');
+
+            loginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await fetch('http://localhost:8181/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Erreur lors de la connexion');
+                    }
+
+                    alert('Connexion réussie ! Redirection vers la page d\'accueil.');
+                    window.location.href = '/login'; 
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
