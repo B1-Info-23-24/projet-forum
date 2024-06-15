@@ -36,55 +36,6 @@
             <a href="/login" class="button register-button">Connectez-vous</a>
         </form>
     </div>
-    <script>
-        document.getElementById('registerForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            console.log('Form submitted'); // Log pour vérifier que la soumission du formulaire est interceptée
-            
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
-
-            if (!passwordRegex.test(password)) {
-                alert('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert('Les mots de passe ne correspondent pas.');
-                return;
-            }
-
-            const formData = new FormData(document.getElementById('registerForm'));
-            try {
-                const response = await fetch('/users/create', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                console.log('Response status:', response.status); // Log pour vérifier le statut de la réponse
-                
-                if (response.ok) {
-                    const data = await response.json(); // Récupérer les données JSON de la réponse
-                    console.log('Response data:', data); // Log pour vérifier les données de la réponse
-
-                    if (data && data.id) {
-                        localStorage.setItem('userID', data.id);
-                        alert('Inscription réussie');
-                        window.location.href = "/home";
-                    } else {
-                        alert('Erreur lors de l\'inscription : ID utilisateur non disponible.');
-                    }
-                } else {
-                    const errorText = await response.text(); // Récupérer le texte de l'erreur pour déboguer
-                    console.error('Error response:', errorText);
-                    alert('Erreur lors de l\'inscription');
-                }
-            } catch (error) {
-            //    console.error('Erreur:', error);
-            }
-        });
-    </script>
+    
 </body>
 </html>
