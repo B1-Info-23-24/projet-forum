@@ -1,65 +1,31 @@
 package main
 
 import (
-	"api/code"
-	"time"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"api/handlers"
+	"api/utils"
+	"log"
+	"net/http"
 )
 
 func main() {
-	api.InitDB()
-	defer api.DB.Close()
+	utils.InitLog()
+	utils.InitDB()
+	defer utils.DB.Close()
 
-	r := gin.Default()
-
-	r.Use(cors.New(cors.Config{
-    AllowOrigins:     []string{"http://http://localhost:8080/"},
-    AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-    AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-    AllowCredentials: true,
-    MaxAge:           12 * time.Hour,
-}))
-
-
-	// Configurer CORS pour autoriser toutes les origines (à ajuster en fonction de vos besoins)
-	// r.Use(cors.Default())
-
-	// User routes
-	r.POST("/register", api.Register)
-	r.POST("/login", api.Login)
+	http.HandleFunc("/register", handlers.Register)
+	http.HandleFunc("/login", handlers.Login)
 
 	// Protected routes
-	authenticated := r.Group("/")
-	authenticated.Use(api.AuthMiddleware()) // Middleware d'authentification
+	http.HandleFunc("/posts", utils.AuthMiddleware(handlers.CreatePost))               // POST /posts
+	http.HandleFunc("/posts/", utils.AuthMiddleware(handlers.HandlePost))              // GET, PUT, DELETE /posts/:postID
+	http.HandleFunc("/comments", utils.AuthMiddleware(handlers.CreateComment))         // POST /comments
+	http.HandleFunc("/posts/comments/", utils.AuthMiddleware(handlers.HandleComments)) // GET, PUT, DELETE /posts/:postID/comments/:commentID
+	http.HandleFunc("/posts/likes/", utils.AuthMiddleware(handlers.HandleLikes))       // POST /posts/:postID/like, DELETE /posts/:postID/unlike, GET /posts/:postID/likes
+	http.HandleFunc("/users/", utils.AuthMiddleware(handlers.HandleUserProfile))       // GET, PUT, DELETE /users/:userID
 
-	{
-		// Post routes
-		authenticated.POST("/posts", api.CreatePost)
-		authenticated.GET("/posts/:postID", api.GetPost)
-		authenticated.PUT("/posts/:postID", api.UpdatePost)
-		authenticated.DELETE("/posts/:postID", api.DeletePost)
+	http.HandleFunc("/search", handlers.SearchPosts) // GET /search
 
-		// Comment routes
-		authenticated.POST("/comments", api.CreateComment)
-		authenticated.GET("/posts/:postID/comments", api.GetComments)
-		authenticated.PUT("/comments/:commentID", api.UpdateComment)
-		authenticated.DELETE("/comments/:commentID", api.DeleteComment)
-
-		// Like routes
-		authenticated.POST("/posts/:postID/like", api.LikePost)
-		authenticated.POST("/posts/:postID/unlike", api.UnlikePost)
-		authenticated.GET("/posts/:postID/likes", api.GetLikes)
-
-		// User profile routes
-		authenticated.GET("/users/:userID", api.GetUserProfile)
-		authenticated.PUT("/users/:userID", api.UpdateUserProfile)
-		authenticated.DELETE("/users/:userID", api.DeleteUserProfile)
-	}
-
-	// Public search route
-	r.GET("/search", api.SearchPosts)
-
-	r.Run(":8181")
+	utils.InfoLogger.Println("Starting server on :8181")
+	log.Println("server sur 8181")
+	http.ListenAndServe(":8181", nil)
 }

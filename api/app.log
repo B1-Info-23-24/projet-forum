@@ -1,0 +1,7 @@
+INFO: 2024/06/15 13:44:54 main.go:27: Starting server on :8181
+INFO: 2024/06/15 14:13:08 main.go:27: Starting server on :8181
+INFO: 2024/06/15 14:15:09 main.go:27: Starting server on :8181
+INFO: 2024/06/15 14:16:18 main.go:28: Starting server on :8181
+INFO: 2024/06/15 14:20:34 main.go:28: Starting server on :8181
+INFO: 2024/06/15 14:21:29 main.go:28: Starting server on :8181
+ERROR: 2024/06/15 14:28:51 user.go:75: Invalid request method for /login
