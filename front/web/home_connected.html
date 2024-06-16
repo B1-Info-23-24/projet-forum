@@ -41,13 +41,13 @@
             <div class="top-bar">
                 <input type="text" placeholder="Tapez ici pour chercher...">
                 <div class="user-info">
-                    <span class="name">{{.ID}}</span>
-                    <button class="profile-button" onclick="location.href='/profile?id={{.ID}}'">Modifier le profil</button>
+                    <span class="name" id="userName">{{.Name}}</span>
+                    <button class="profile-button" id="profileButton">Modifier le profil</button>
                     <button class="profile-button" onclick="location.href='/logout'">Déconnexion</button>
                 </div>
             </div>
             <form id="postForm" action="/post/create" method="post">
-                <input type="hidden" name="user_id" value="{{.ID}}">
+                <input type="hidden" name="user_id" id="userIdInput" value="">
                 <div class="post-box">
                     <textarea name="content" placeholder="Partageons ce qui se passe dans votre esprit..."></textarea>
                     <button type="submit" class="create-post-button">Créer un post</button>
@@ -81,6 +81,36 @@
         </footer>
     </div>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function getUserIdFromUrl() {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('id');
+            }
+
+            function fetchUserName(userId) {
+                return fetch(`http://localhost:8080//user?id=${userId}`)
+                    .then(response => response.json())
+                    .then(data => data.name);
+            }
+
+            function updateUserInfo() {
+                const userId = getUserIdFromUrl();
+                if (userId) {
+                    document.getElementById('userIdInput').value = userId;
+                    document.getElementById('profileButton').setAttribute('onclick', `location.href='/profile?id=${userId}'`);
+                    fetchUserName(userId)
+                        .then(userName => {
+                            if (userName) {
+                                document.getElementById('userName').textContent = userName;
+                            }
+                        })
+                        .catch(error => console.error('Erreur:', error));
+                }
+            }
+
+            updateUserInfo();
+        });
+
         function createPost(event) {
             event.preventDefault();
             const formData = new FormData(document.getElementById('postForm'));

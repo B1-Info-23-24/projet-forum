@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -320,15 +321,22 @@ func homeConnected(w http.ResponseWriter, r *http.Request) {
 }
 
 func createPost(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseForm() // Ajouté pour analyser le formulaire
+	if err != nil {
+		http.Error(w, "Erreur lors de l'analyse du formulaire", http.StatusBadRequest)
 		return
 	}
 
 	userID := r.FormValue("user_id")
 	content := r.FormValue("content")
 
+	fmt.Println("userID:", userID)
+	fmt.Println("content:", content)
 	if userID == "" || content == "" {
 		http.Error(w, "L'ID utilisateur et le contenu sont requis", http.StatusBadRequest)
 		return

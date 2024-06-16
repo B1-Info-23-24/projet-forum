@@ -8,7 +8,7 @@ func SetupRoutes() {
 	http.HandleFunc("/register", serveRegisterForm)
 	http.HandleFunc("/users/create", createUser)
 	http.HandleFunc("/login", login)
-	//http.HandleFunc("/profile", profile)
+	http.HandleFunc("/profile", profile)
 	http.HandleFunc("/profile/update", updateProfile)
 	http.HandleFunc("/profile/delete", deleteUser)
 	http.HandleFunc("/home_connected", homeConnected)
