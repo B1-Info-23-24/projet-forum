@@ -4,71 +4,71 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Forum Motorum</title>
+	<title>Motorum - Accueil</title>
 	<link rel="stylesheet" href="../static/home.css">
-	<style>
-		.welcome-message {
-			font-size: 24px;
-			margin-bottom: 20px;
-		}
-
-		.posts {
-			margin-top: 20px;
-		}
-
-		.post {
-			background-color: #f8f9fa;
-			padding: 10px;
-			margin-bottom: 10px;
-			border-radius: 5px;
-			box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-		}
-
-		.post .author {
-			font-weight: bold;
-		}
-
-		.post .content {
-			margin-top: 5px;
-		}
-	</style>
 </head>
-
 <body>
 	<div class="container">
-		<header class="header">
-			<h1>Forum Motorum</h1>
-			<p class="welcome-message">Bienvenue, <span id="username"></span>!</p>
-			<nav class="navigation">
-				<a href="#" id="profile" class="button">Profil</a>
-				<a href="/logout" class="button">Déconnexion</a>
-			</nav>
-		</header>
-
-		<main class="content">
-			<form id="postForm">
-				<textarea name="content" id="postContent" placeholder="Partagez vos pensées..."></textarea>
-				<button type="submit" class="button">Publier</button>
-			</form>
-
-			<div class="posts" id="posts"></div>
-		</main>
-
 		<aside class="sidebar">
-			<h2>Groupes populaires</h2>
-			<ul class="groups">
-				<li><a href="#">MotoGP</a></li>
-				<li><a href="#">Supermot</a></li>
-				<li><a href="#">Cruisers</a></li>
-				<li><a href="#">Enduro</a></li>
-				<li><a href="#">Custom</a></li>
-			</ul>
+			<div class="logo">Motorum</div>
+			<div class="sections">
+				<div class="section active">Les plus récents</div>
+				<div class="section">Populaire du jour</div>
+				<div class="section">Abonnement</div>
+			</div>
+			<div class="tags">
+				<h2>Tags populaires</h2>
+				<div class="tag">#LeBoncoin</div>
+				<div class="tag">#Budget 10K</div>
+				<div class="tag">#Budget 5K</div>
+				<div class="tag">#Supermot</div>
+				<div class="tag">#MotoGP</div>
+				<div class="tag">#BMW</div>
+			</div>
+			<div class="pinned-group">Groupe épinglé</div>
 		</aside>
+		<main class="content">
+			<div class="top-bar">
+				<!-- <input type="text" placeholder="Tapez ici pour chercher..."> -->
+				<div class="user-info">
+					<p class="welcome-message"><span id="username"></span></p>
+					<a href="#" id="profile" class="button">Profil</a>
+					<!-- <button class="profile-button" onclick="location.href='/profile?id={{.ID}}'">Modifier le profil</button> -->
+					<button class="profile-button" onclick="location.href='/logout'">Déconnexion</button>
+				</div>
+			</div>
+			<form id="postForm" action="/post/create" method="post">
+				<input type="hidden" name="user_id" value="{{.ID}}">
+				<div class="post-box">
+					<textarea name="content" placeholder="Partageons ce qui se passe dans votre esprit..."></textarea>
+					<button type="submit" class="create-post-button">Créer un post</button>
+				</div>
+			</form>
+			<div class="posts">
+				<!-- Les posts seront chargés ici -->
+			</div>
+		</main>
+		<aside class="sidebar-right">
+			<h2>Leboncoin top annonce</h2>
+			<div class="ad">Bonjour je vends ma moto, un Z800 abs de 2016 que j'ai bridé car je suis encore...</div>
+			<div class="ad">Bonjour je vend mon duke 790 de 2018 en très bon état prête à rouler, révision faite cher...</div>
+			<div class="ad">Je vends une Suzuki GSR 750 en excellent état...</div>
+			<div class="ad">SPEED TRIPLE 1050 avec ABS Mise en circulation 05/2015</div>
+			<div class="ad">Ktm 890 R avec le tech pack. Moto en parfait état, entretien 100% chez KTM. Révision récente.
+			</div>
+			<div class="ad">Je vend ma KTM 690 SM-C R, pour passer sur un roadster.</div>
+		</aside>
+	</div>
+	<div class="footer-container">
 		<footer class="footer">
-			<p>&copy; 2024 Forum Motorum. Tous droits réservés.</p>
+			<p>© 2024 Motorum. Tous droits réservés.</p>
+			<p>
+				<a href="#">Politique de confidentialité</a> |
+				<a href="#">Conditions d'utilisation</a> |
+				<a href="#">Contactez-nous</a>
+			</p>
 		</footer>
 	</div>
-
 	<script>
 		let user;
 		const urlParams = new URLSearchParams(window.location.search);
@@ -89,48 +89,15 @@
 				.catch(error => console.error('Erreur:', error));
 		}
 
-		function createPost(event) {
-			event.preventDefault();
-			const content = document.getElementById('postContent').value;
-			if (id && content) {
-				const postData = {
-					user_id: id,
-					content: content
-				};
-				console.log(JSON.stringify(postData));
-				fetch('http://localhost:8181/post/create', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(postData)
-				})
-					.then(response => {
-						if (response.ok) {
-							alert('Post créé avec succès');
-							document.getElementById('postContent').value = '';
-							loadPosts();
-						} else {
-							response.text().then(text => {
-								alert('Erreur lors de la création du post : ' + text);
-							});
-						}
-					})
-					.catch(error => console.error('Erreur:', error));
-			} else {
-				alert('Utilisateur non connecté ou contenu vide.');
-			}
-		}
-
-
 		// function createPost(event) {
 		// 	event.preventDefault();
 		// 	const content = document.getElementById('postContent').value;
-		// 	if (user && content) {
+		// 	if (id && content) {
 		// 		const postData = {
-		// 			id: user.id,
+		// 			user_id: id,
 		// 			content: content
 		// 		};
+		// 		console.log(JSON.stringify(postData));
 		// 		fetch('http://localhost:8181/post/create', {
 		// 			method: 'POST',
 		// 			headers: {
@@ -155,75 +122,51 @@
 		// 	}
 		// }
 
-		function loadPosts() {
-			fetch('http://localhost:8181/posts', {
-				method: 'GET'
+		function createPost(event) {
+			event.preventDefault();
+			const formData = new FormData(document.getElementById('postForm'));
+			fetch('http://localhost:8181/post/create', {
+				method: 'POST',
+				body: formData
 			})
-				.then(response => response.json())
-				.then(posts => {
-					const postsContainer = document.getElementById('posts');
-					postsContainer.innerHTML = '';
-					posts.forEach(post => {
-						const postElement = document.createElement('div');
-						postElement.className = 'post';
-						postElement.innerHTML = `
-                            <div class="author">${post.author}</div>
-                            <div class="content">${post.content}</div>
-                            <div class="created_at">${new Date(post.created_at).toLocaleString()}</div>
-                        `;
-						postsContainer.appendChild(postElement);
-					});
+				.then(response => {
+					if (response.ok) {
+						alert('Post créé avec succès');
+						loadPosts();
+					} else {
+						response.text().then(text => {
+							alert('Erreur lors de la création du post : ' + text);
+						});
+					}
 				})
 				.catch(error => console.error('Erreur:', error));
 		}
 
 		document.getElementById('postForm').addEventListener('submit', createPost);
-		window.onload = loadPosts;
+
+		function loadPosts() {
+			fetch('http://localhost:8181/posts', {
+				method: 'GET',
+			})
+				.then(response => response.json())
+				.then(data => {
+					const postsContainer = document.querySelector('.posts');
+					postsContainer.innerHTML = '';
+					data.forEach(post => {
+						const postElement = document.createElement('div');
+						postElement.classList.add('post');
+						postElement.innerHTML = `
+                        <p>${post.content}</p>
+                        <span class="post-user">Posté par ${post.user_name}</span>
+                    `;
+						postsContainer.appendChild(postElement);
+					});
+				})
+				.catch(error => console.error('Erreur de chargement des posts:', error));
+		}
+
+		document.addEventListener('DOMContentLoaded', loadPosts);
 	</script>
 </body>
 
 </html>
-
-// function createPost(event) {
-// event.preventDefault();
-// const formData = new FormData(document.getElementById('postForm'));
-// fetch('/post/create', {
-// method: 'POST',
-// body: formData
-// })
-// .then(response => {
-// if (response.ok) {
-// alert('Post créé avec succès');
-// loadPosts();
-// } else {
-// response.text().then(text => {
-// alert('Erreur lors de la création du post : ' + text);
-// });
-// }
-// })
-// .catch(error => console.error('Erreur:', error));
-// }
-
-// function loadPosts() {
-// fetch('/posts', {
-// method: 'GET',
-// })
-// .then(response => response.json())
-// .then(data => {
-// const postsContainer = document.querySelector('.posts');
-// postsContainer.innerHTML = '';
-// data.forEach(post => {
-// const postElement = document.createElement('div');
-// postElement.classList.add('post');
-// postElement.innerHTML = `
-// <p class="author">Posté par ${post.author}</p>
-// <p class="content">${post.content}</p>
-// `;
-// postsContainer.appendChild(postElement);
-// });
-// })
-// .catch(error => console.error('Erreur de chargement des posts:', error));
-// }
-
-// document.getElementById('postForm').addEventListener('submit', createPost);
-// document.addEventListener('DOMContentLoaded', loadPosts);
