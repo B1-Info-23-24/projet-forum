@@ -2,15 +2,19 @@ package api
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
+	"strconv"
+
+	"encoding/json"
+
 	"html/template"
 	"log"
 	"net/http"
-	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+//var db *sql.DB // Assurez-vous que la variable db est initialisée ailleurs dans votre application
 
 type Post struct {
 	ID        int    `json:"id"`
@@ -44,7 +48,7 @@ func serveRegisterForm(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 }
 
-func getUsers(w http.ResponseWriter, r *http.Request) {
+func GetUsers(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT id, name, email FROM users")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -69,11 +73,10 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	/* trunk-ignore(golangci-lint/errcheck) */
 	w.Write(jsonResponse)
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
 		return
 	}
@@ -104,7 +107,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Envoyer une réponse JSON avec l'URL de redirection
-	redirectUrl := "/home_connected?id=" + strconv.Itoa(user.ID)
+	redirectUrl := "/register" + strconv.Itoa(user.ID)
 	response := map[string]string{"redirectUrl": redirectUrl}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -120,37 +123,93 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	log.Println("Creating user:", name, email)
+	log.Println("Received values: Name:", name, ", Email:", email)
+
 	if name == "" || email == "" || password == "" {
+		log.Println("Missing values: Name:", name, " Email:", email, " Password:", password)
 		http.Error(w, "Le nom, l'email et le mot de passe sont requis", http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("Error hashing password:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	stmt, err := db.Prepare("INSERT INTO users(name, email, password) VALUES(?, ?, ?)")
 	if err != nil {
+		log.Println("Error preparing statement:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(name, email, string(hashedPassword))
+	log.Println("Prepared statement successfully")
+
+	result, err := stmt.Exec(name, email, string(hashedPassword))
 	if err != nil {
+		log.Println("Error executing statement:", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	log.Println("User created successfully:", name, email)
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	userID, err := result.LastInsertId()
+	if err != nil {
+		log.Println("Error getting last insert ID:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("User created successfully with ID:", userID)
+
+	response := map[string]interface{}{
+		"id": userID,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println("Error encoding JSON response:", err)
+	}
+}
+
+type Userid struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func GetUserbyid(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	err := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Encode user struct into JSON
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func profile(w http.ResponseWriter, r *http.Request) {
-
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
@@ -182,7 +241,6 @@ func profile(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateProfile(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
@@ -257,38 +315,6 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// func homeConnected(w http.ResponseWriter, r *http.Request) {
-
-// 	id := r.URL.Query().Get("id")
-// 	if id == "" {
-// 		http.Redirect(w, r, "/home_connected", http.StatusSeeOther)
-// 		return
-// 	}
-
-// 	var user User
-// 	err := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email)
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		}
-// 		return
-// 	}
-
-// 	tmpl, err := template.ParseFiles("web/home_connected.html")
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	err = tmpl.Execute(w, user)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// }
-
 func homeConnected(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
@@ -320,28 +346,36 @@ func homeConnected(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Handler pour la création de post
 func createPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
-	err := r.ParseForm() // Ajouté pour analyser le formulaire
+	// Parse the multipart form, with a limit on the size (10 MB in this example)
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
-		http.Error(w, "Erreur lors de l'analyse du formulaire", http.StatusBadRequest)
+		http.Error(w, "Erreur lors du traitement du formulaire", http.StatusBadRequest)
 		return
 	}
 
-	userID := r.FormValue("user_id")
+	// Extract user_id and content from the form data
+	userIDStr := r.FormValue("user_id")
 	content := r.FormValue("content")
 
-	fmt.Println("userID:", userID)
-	fmt.Println("content:", content)
-	if userID == "" || content == "" {
-		http.Error(w, "L'ID utilisateur et le contenu sont requis", http.StatusBadRequest)
+	// Convert userIDStr to int
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID == 0 || content == "" {
+		http.Error(w, "L'ID utilisateur et le contenu sont requis et doivent être valides", http.StatusBadRequest)
 		return
 	}
 
+	// Debug: Print the extracted values
+	fmt.Println("UserID:", userID)
+	fmt.Println("Content:", content)
+
+	// Insérez le post dans la base de données
 	stmt, err := db.Prepare("INSERT INTO posts(user_id, content) VALUES(?, ?)")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -355,11 +389,12 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
+	// Répondre avec succès
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("Post créé avec succès"))
 }
 
 func updatePost(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
@@ -389,8 +424,8 @@ func updatePost(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
 }
-func deletePost(w http.ResponseWriter, r *http.Request) {
 
+func deletePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
@@ -421,7 +456,6 @@ func deletePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
-
 	rows, err := db.Query(`
 			SELECT posts.id, posts.user_id, users.name, posts.content, posts.created_at
 			FROM posts
@@ -452,4 +486,55 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
+}
+
+func likePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	postID := r.FormValue("post_id")
+	userID := r.FormValue("user_id")
+
+	stmt, err := db.Prepare("INSERT INTO likes (post_id, user_id) VALUES (?, ?)")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(postID, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func commentPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	postID := r.FormValue("post_id")
+	userID := r.FormValue("user_id")
+	content := r.FormValue("content")
+
+	stmt, err := db.Prepare("INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(postID, userID, content)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }

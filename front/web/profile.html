@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil</title>
-    <link rel="stylesheet" href="/static/css/profile.css">
+    <link rel="stylesheet" href="../static/profile.css">
 </head>
+
 <body>
-    <div class="container">
+    <div class="container"> 
         <h1>Mon Profil</h1>
-        <form id="profileForm" action="/profile/update" method="post">
+        <form id="profileForm" action="/home_connected?id=" method="post">
             <input type="hidden" name="id" value="{{.ID}}">
             <div class="profile-section">
                 <label for="name">Pseudo</label>
@@ -31,7 +33,30 @@
         </form>
     </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        let user
+        // Assuming the URL is: https://example.com/?id=123&name=John
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        console.log(id); // Outputs: 123
+        if (id != null) {
+            fetch(`http://localhost:8181/getuserbyid?id=${id}`, {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('input[name="id"]').value = data.id;
+                    document.querySelector('input[name="name"]').value = data.name;
+                    document.querySelector('input[name="email"]').value = data.email;
+                    user = data
+                    let username = document.getElementById('username')
+                    username.append(user?.name)
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
             const urlParams = new URLSearchParams(window.location.search);
             const userId = urlParams.get('id');
 
@@ -48,4 +73,5 @@
         });
     </script>
 </body>
+
 </html>

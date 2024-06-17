@@ -11,7 +11,6 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "web/home.html")
-
 	})
 
 	http.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
@@ -19,25 +18,37 @@ func main() {
 	})
 
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-
 		if r.Method == http.MethodGet {
 			http.ServeFile(w, r, "web/login.html")
 			return
-		} else if r.Method != http.MethodPost {
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		} else if r.Method == http.MethodPost {
+			// Redirection vers l'API pour gérer la connexion
+			redirectToAPI(w, r, "/api/login")
 			return
 		}
-	})
-
-	http.HandleFunc("/home_connected", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "web/home_connected.html")
-
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 	})
 
 	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "web/register.html")
+		if r.Method == http.MethodGet {
+			http.ServeFile(w, r, "web/register.html")
+			return
+		} else if r.Method == http.MethodPost {
+			// Redirection vers l'API pour gérer l'inscription
+			redirectToAPI(w, r, "/api/register")
+			return
+		}
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 	})
 
-	log.Println("Starting frontend server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Démarrage du serveur frontend
+	log.Println("Serveur front-end démarré sur le port :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func redirectToAPI(w http.ResponseWriter, r *http.Request, apiEndpoint string) {
+	targetURL := "http://localhost:8181" + apiEndpoint
+	http.Redirect(w, r, targetURL, http.StatusSeeOther)
 }

@@ -1,4 +1,6 @@
-/* styles.css */
+/* register.css */
+
+/* Styles généraux */
 body {
     background-color: #1a1a1a;
     display: flex;
@@ -53,33 +55,38 @@ body {
     margin-bottom: 5px;
 }
 
-.form-group input {
-    width: 100%;
-    padding: 10px;
+.form-group input,
+.button {
+    width: calc(100% - 20px); /* Prend la largeur du conteneur moins les paddings */
+    padding: 10px; /* Définit le padding */
     border: none;
     border-radius: 5px;
     background-color: #444;
     color: #ccc;
+    font-size: 16px;
+    box-sizing: border-box; /* Inclut le padding et la bordure dans la largeur */
 }
 
 .form-group input::placeholder {
     color: #888;
 }
 
-.button {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #444;
+.form-text {
     color: #ccc;
-    font-size: 16px;
-    cursor: pointer;
-    text-align: center;
-    display: block;
-    text-decoration: none;
+    font-size: 12px;
+    margin-top: 5px;
 }
 
-.button:hover {
-    background-color: #f39c12;
+/* Styles des boutons */
+.button {
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    margin-right: 5px;
+    margin-top: 20px; /* Ajoute un espace entre le bouton et le champ de formulaire */
+}
+
+.button:last-child {
+    margin-right: 0; /* Réinitialise la marge à droite pour le dernier bouton */
 }

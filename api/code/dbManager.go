@@ -9,6 +9,7 @@ import (
 
 var db *sql.DB
 
+// Connect initialise la connexion à la base de données SQLite
 func Connect() *sql.DB {
 	var err error
 	db, err = sql.Open("sqlite3", "./base.db")
@@ -23,6 +24,7 @@ func Connect() *sql.DB {
 		log.Fatal(err)
 	}
 
+	// Créer la table des utilisateurs
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +37,7 @@ func Connect() *sql.DB {
 		log.Fatal(err)
 	}
 
+	// Créer la table des publications
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS posts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,5 +51,20 @@ func Connect() *sql.DB {
 		log.Fatal(err)
 	}
 
+	// Créer la table des sessions
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS sessions (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			session_token TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(user_id) REFERENCES users(id)
+		)
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return db
 }
+
