@@ -574,7 +574,8 @@ func updatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
+	//http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
+	w.Write([]byte("modif post  créé avec succès"))
 }
 
 func deletePost(w http.ResponseWriter, r *http.Request) {
@@ -604,7 +605,8 @@ func deletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
+	//http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
+	w.Write([]byte("suppression post  fait avec succès"))
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
