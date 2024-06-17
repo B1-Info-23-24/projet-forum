@@ -219,7 +219,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Envoyer une réponse JSON avec l'URL de redirection
-	redirectUrl := "/home_connected?id=" + strconv.Itoa(user.ID)
+	redirectUrl := "/home?id=" + strconv.Itoa(user.ID)
 	response := map[string]string{"redirectUrl": redirectUrl}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -287,41 +287,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error encoding JSON response:", err)
 	}
 }
-
-// func GetUserbyid(w http.ResponseWriter, r *http.Request) {
-// 	id := r.URL.Query().Get("id")
-// 	if id == "" {
-// 		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	var user User
-// 	err := db.QueryRow("SELECT id, name, email FROM users WHERE id = ?", id).Scan(&user.ID, &user.Name, &user.Email)
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			http.Error(w, "Utilisateur non trouvé", http.StatusNotFound)
-// 		} else {
-// 			http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		}
-// 		return
-// 	}
-
-// 	// Envoyer une réponse JSON avec l'URL de redirection
-// 	w.Header().Set("Content-Type", "application/json")
-// 	json.NewEncoder(w).Encode()
-
-// 	tmpl, err := template.ParseFiles("web/profile.html")
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	err = tmpl.Execute(w, user)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// }
 
 type Userid struct {
 	ID    int    `json:"id"`
@@ -436,30 +401,33 @@ func updateProfile(w http.ResponseWriter, r *http.Request) {
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
 	}
 
 	id := r.FormValue("id")
 	if id == "" {
-		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
-		return
+			http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
+			return
 	}
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE id = ?")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Réponse de succès (optionnelle)
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, `{"message": "Utilisateur avec ID %s supprimé"}`, id)
 }
 
 func homeConnected(w http.ResponseWriter, r *http.Request) {
@@ -555,8 +523,8 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 
 	// Vérifier que les champs requis sont présents et valides
 	if postData.UserID == 0 || postData.Content == "" {
-			http.Error(w, "L'ID utilisateur et le contenu sont requis", http.StatusBadRequest)
-			return
+		http.Error(w, "L'ID utilisateur et le contenu sont requis", http.StatusBadRequest)
+		return
 	}
 
 	// Insérez le post dans la base de données

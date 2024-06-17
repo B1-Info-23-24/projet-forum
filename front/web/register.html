@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/register.css">
     <title>Inscription</title>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -25,7 +27,8 @@
                 <label for="password">Mot de passe:</label>
                 <input type="password" id="password" name="password" required autocomplete="new-password">
                 <small id="passwordHelp" class="form-text">
-                    Doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
+                    Doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère
+                    spécial.
                 </small>
             </div>
             <div class="form-group">
@@ -36,6 +39,30 @@
             <a href="/login" class="button register-button">Connectez-vous</a>
         </form>
     </div>
-    
+
 </body>
+<script>
+    function registerUser(event) {
+        event.preventDefault();
+        const formData = new FormData(document.getElementById('registerForm'));
+        fetch('http://localhost:8181/users/create', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                console.log(response)
+                if (response.ok) {
+                    alert('Inscription réussie');
+                    window.location.href = "/login"; // Redirection vers la page de connexion après inscription réussie
+                } else {
+                    response.text().then(text => {
+                        alert('Erreur lors de l\'inscription : ' + text);
+                    });
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', registerUser);
+</script>
 </html>
