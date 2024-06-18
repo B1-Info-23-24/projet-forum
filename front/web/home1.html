@@ -66,27 +66,37 @@
 </body>
 <script>
 	function loadPosts() {
-		fetch('http://localhost:8181/posts', {
-			method: 'GET',
-		})
-			.then(response => response.json())
-			.then(data => {
-				const postsContainer = document.querySelector('.posts');
-				postsContainer.innerHTML = '';
-				data.forEach(post => {
-					const postElement = document.createElement('div');
-					postElement.classList.add('post');
-					postElement.innerHTML = `
-                        <p>${post.content}</p>
-                        <span class="post-user">Posté par ${post.user_name}</span>
-                    `;
-					postsContainer.appendChild(postElement);
-				});
-			})
-			.catch(error => console.error('Erreur de chargement des posts:', error));
-	}
+    fetch('http://localhost:8181/posts', {
+      method: 'GET',
+    })
+    .then(response => response.json())
+    .then(data => {
+      const postsContainer = document.querySelector('.posts');
+      postsContainer.innerHTML = '';
+      data.forEach(post => {
+        const postElement = document.createElement('div');
+        postElement.classList.add('post');
+        postElement.innerHTML = `
+          <p>${post.content}</p>
+          <span class="post-user">Posté par ${post.user_name}</span>
+          <span class="post-likes">Likes: ${post.likes}</span>
+          <div class="comments">
+            <h3>Commentaires</h3>
+            ${post.comments.map(comment => `
+              <div class="comment">
+                <span class="comment-user">${comment.user_name}:</span>
+                <p>${comment.content}</p>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        postsContainer.appendChild(postElement);
+      });
+    })
+    .catch(error => console.error('Erreur de chargement des posts:', error));
+  }
 
-	document.addEventListener('DOMContentLoaded', loadPosts);
+  document.addEventListener('DOMContentLoaded', loadPosts);
 </script>
 
 </html>

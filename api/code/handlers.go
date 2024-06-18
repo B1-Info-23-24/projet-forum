@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"time"
 
 	"encoding/json"
 	"html/template"
@@ -15,12 +16,23 @@ import (
 
 //var db *sql.DB // Assurez-vous que la variable db est initialisée ailleurs dans votre application
 
+// Définition de Comment
+type Comment struct {
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Post struct {
-	ID        int    `json:"id"`
-	UserID    int    `json:"user_id"`
-	UserName  string `json:"user_name"`
-	Content   string `json:"content"`
-	CreatedAt string `json:"created_at"`
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
+	UserName  string    `json:"user_name"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	Likes     int       `json:"likes"`
+	Comments  []Comment `json:"comments"`
 }
 
 type User struct {
@@ -401,27 +413,27 @@ func profile(w http.ResponseWriter, r *http.Request) {
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-			return
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
 	}
 
 	id := r.FormValue("id")
 	if id == "" {
-			http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
-			return
+		http.Error(w, "ID utilisateur requis", http.StatusBadRequest)
+		return
 	}
 
 	stmt, err := db.Prepare("DELETE FROM users WHERE id = ?")
 	if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(id)
 	if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Réponse de succès (optionnelle)
@@ -614,24 +626,24 @@ func updateProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
- 
+
 	var payload struct {
 		ID       string `json:"id"`
 		Name     string `json:"name"`
 		Email    string `json:"email"`
 		Password string `json:"password,omitempty"`
 	}
- 
+
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Requête invalide", http.StatusBadRequest)
 		return
 	}
- 
+
 	if payload.ID == "" || payload.Name == "" || payload.Email == "" {
 		http.Error(w, "L'ID, le nom et l'email sont requis", http.StatusBadRequest)
 		return
 	}
- 
+
 	var stmt *sql.Stmt
 	var err error
 	if payload.Password != "" {
@@ -654,50 +666,91 @@ func updateProfile(w http.ResponseWriter, r *http.Request) {
 		}
 		_, err = stmt.Exec(payload.Name, payload.Email, payload.ID)
 	}
- 
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
- 
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Profil mis à jour avec succès"})
- 
+
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query(`
-			SELECT posts.id, posts.user_id, users.name, posts.content, posts.created_at
-			FROM posts
-			JOIN users ON posts.user_id = users.id
-			ORDER BY posts.created_at DESC
-		`)
+	fmt.Println("Début de la fonction getPosts")
+
+	query := `
+		SELECT 
+			posts.id, 
+			posts.user_id, 
+			users.name AS user_name, 
+			posts.content, 
+			posts.created_at,
+			COALESCE(likes.like_count, 0) AS likes,
+			(
+				SELECT 
+					'[' || group_concat(JSON_OBJECT('id', comments.id, 'user_name', users_comments.name, 'content', comments.content)) || ']'
+				FROM comments
+				LEFT JOIN users AS users_comments ON comments.user_id = users_comments.id
+				WHERE comments.post_id = posts.id
+			) AS comments
+		FROM posts
+		JOIN users ON posts.user_id = users.id
+		LEFT JOIN (
+			SELECT post_id, COUNT(*) AS like_count
+			FROM likes
+			GROUP BY post_id
+		) AS likes ON likes.post_id = posts.id
+		ORDER BY posts.created_at DESC
+	`
+
+	fmt.Println("Exécution de la requête SQL...")
+	rows, err := db.Query(query)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Erreur lors de la requête SQL : %v", err), http.StatusInternalServerError)
+		fmt.Printf("Erreur lors de la requête SQL : %v\n", err)
 		return
 	}
 	defer rows.Close()
 
+	fmt.Println("Récupération des données de la base de données...")
 	posts := []Post{}
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.ID, &post.UserID, &post.UserName, &post.Content, &post.CreatedAt); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		var commentsJSON sql.NullString
+		if err := rows.Scan(&post.ID, &post.UserID, &post.UserName, &post.Content, &post.CreatedAt, &post.Likes, &commentsJSON); err != nil {
+			http.Error(w, fmt.Sprintf("Erreur lors du scan des lignes : %v", err), http.StatusInternalServerError)
+			fmt.Printf("Erreur lors du scan des lignes : %v\n", err)
 			return
+		}
+		// Vérifier si commentsJSON est valide avant de le décoder
+		if commentsJSON.Valid {
+			if err := json.Unmarshal([]byte(commentsJSON.String), &post.Comments); err != nil {
+				http.Error(w, fmt.Sprintf("Erreur lors du décodage JSON : %v", err), http.StatusInternalServerError)
+				fmt.Printf("Erreur lors du décodage JSON : %v\n", err)
+				return
+			}
+		} else {
+			post.Comments = []Comment{} // Ou nil, selon votre modèle de données
 		}
 		posts = append(posts, post)
 	}
 
+	fmt.Println("Conversion des résultats en JSON...")
 	jsonResponse, err := json.Marshal(posts)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Erreur lors du codage JSON : %v", err), http.StatusInternalServerError)
+		fmt.Printf("Erreur lors du codage JSON : %v\n", err)
 		return
 	}
 
+	fmt.Println("Envoi de la réponse JSON...")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
+
 
 func likePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
