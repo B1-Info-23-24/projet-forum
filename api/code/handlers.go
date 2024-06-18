@@ -352,52 +352,52 @@ func profile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func updateProfile(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return
-	}
+// func updateProfile(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	id := r.FormValue("id")
-	name := r.FormValue("name")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+// 	id := r.FormValue("id")
+// 	name := r.FormValue("name")
+// 	email := r.FormValue("email")
+// 	password := r.FormValue("password")
 
-	if id == "" || name == "" || email == "" {
-		http.Error(w, "L'ID, le nom et l'email sont requis", http.StatusBadRequest)
-		return
-	}
+// 	if id == "" || name == "" || email == "" {
+// 		http.Error(w, "L'ID, le nom et l'email sont requis", http.StatusBadRequest)
+// 		return
+// 	}
 
-	var stmt *sql.Stmt
-	var err error
-	if password != "" {
-		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if hashErr != nil {
-			http.Error(w, hashErr.Error(), http.StatusInternalServerError)
-			return
-		}
-		stmt, err = db.Prepare("UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = stmt.Exec(name, email, string(hashedPassword), id)
-	} else {
-		stmt, err = db.Prepare("UPDATE users SET name = ?, email = ? WHERE id = ?")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = stmt.Exec(name, email, id)
-	}
+// 	var stmt *sql.Stmt
+// 	var err error
+// 	if password != "" {
+// 		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+// 		if hashErr != nil {
+// 			http.Error(w, hashErr.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		stmt, err = db.Prepare("UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?")
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		_, err = stmt.Exec(name, email, string(hashedPassword), id)
+// 	} else {
+// 		stmt, err = db.Prepare("UPDATE users SET name = ?, email = ? WHERE id = ?")
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		_, err = stmt.Exec(name, email, id)
+// 	}
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
 
-	http.Redirect(w, r, "/home_connected?id="+id, http.StatusSeeOther)
-}
+// 	http.Redirect(w, r, "/home_connected?id="+id, http.StatusSeeOther)
+// }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -607,6 +607,63 @@ func deletePost(w http.ResponseWriter, r *http.Request) {
 
 	//http.Redirect(w, r, "/home_connected?id="+userID, http.StatusSeeOther)
 	w.Write([]byte("suppression post  fait avec succès"))
+}
+
+func updateProfile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+ 
+	var payload struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password,omitempty"`
+	}
+ 
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Requête invalide", http.StatusBadRequest)
+		return
+	}
+ 
+	if payload.ID == "" || payload.Name == "" || payload.Email == "" {
+		http.Error(w, "L'ID, le nom et l'email sont requis", http.StatusBadRequest)
+		return
+	}
+ 
+	var stmt *sql.Stmt
+	var err error
+	if payload.Password != "" {
+		hashedPassword, hashErr := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+		if hashErr != nil {
+			http.Error(w, hashErr.Error(), http.StatusInternalServerError)
+			return
+		}
+		stmt, err = db.Prepare("UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = stmt.Exec(payload.Name, payload.Email, string(hashedPassword), payload.ID)
+	} else {
+		stmt, err = db.Prepare("UPDATE users SET name = ?, email = ? WHERE id = ?")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = stmt.Exec(payload.Name, payload.Email, payload.ID)
+	}
+ 
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+ 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Profil mis à jour avec succès"})
+ 
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {

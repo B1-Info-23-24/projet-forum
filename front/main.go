@@ -10,7 +10,11 @@ func main() {
     http.Handle("/static/", http.StripPrefix("/static", fsStatic))
     
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "web/home.html") 
+        http.ServeFile(w, r, "web/home1.html") 
+    })
+
+    http.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, "web/home_connected.html") 
     })
 
     http.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
