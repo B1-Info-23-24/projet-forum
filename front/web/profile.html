@@ -6,6 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil</title>
     <link rel="stylesheet" href="../static/profile.css">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
@@ -32,17 +69,28 @@
             <button type="submit" class="delete-button" onclick="redirect()">Supprimer mon compte</button>
             <!-- <button type="submit" class="delete-button">Supprimer mon compte</button> -->
         </form>
+        <!-- Modal for Editing Post -->
+        <div id="editPostModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <form id="editPostForm">
+                    <input type="hidden" id="editPostId">
+                    <input type="hidden" id="editUserId">
+                    <label for="editPostContent">Contenu du Post:</label>
+                    <textarea id="editPostContent" rows="4" cols="50"></textarea>
+                    <button type="submit">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
 
         <div class="posts"></div>
     </div>
 
     <script>
-    function redirect() {
-        window.location.href = 'http://localhost:8080/';
-    }
-    </script>
+        function redirect() {
+            window.location.href = 'http://localhost:8080/';
+        }
 
-    <script>
         document.addEventListener("DOMContentLoaded", function () {
             const urlParams = new URLSearchParams(window.location.search);
             const userId = urlParams.get('id');
@@ -70,6 +118,21 @@
 
             const deleteForm = document.getElementById('deleteForm');
             deleteForm.addEventListener('submit', deleteProfile);
+
+            document.getElementById('editPostForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                updatePost();
+            });
+
+            document.querySelector('.close').addEventListener('click', function () {
+                closeEditPostModal();
+            });
+
+            window.onclick = function (event) {
+                if (event.target == document.getElementById('editPostModal')) {
+                    closeEditPostModal();
+                }
+            };
         });
 
         function updateProfile(event) {
@@ -161,9 +224,11 @@
                         postsContainer.appendChild(postElement);
                     });
 
-                    // Attach event listeners to the buttons
                     document.querySelectorAll('.edit-post-button').forEach(button => {
-                        button.addEventListener('click', editPost);
+                        button.addEventListener('click', function () {
+                            const postId = this.dataset.postId;
+                            openEditPostModal(postId);
+                        });
                     });
 
                     document.querySelectorAll('.delete-post-button').forEach(button => {
@@ -175,43 +240,49 @@
                     alert('Une erreur est survenue lors du chargement des posts');
                 });
         }
-        function editPost(event) {
-            const postId = event.target.dataset.postId;
 
+        function openEditPostModal(postId) {
             fetch(`http://localhost:8181/getpostbyid?id=${postId}`, {
                 method: 'GET',
             })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => { throw new Error(text) });
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(post => {
-                    const content = prompt("Modifiez le contenu du post:", post.content);
-                    if (content !== null) {
-                        fetch('http://localhost:8181/post/update', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ id: postId, user_id: post.user_id, content: content }),
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log("Post updated:", data);
-                                alert('Le post a été mis à jour');
-                                loadPosts(post.user_id);
-                            })
-                            .catch(error => {
-                                console.error('Erreur lors de la mise à jour du post:', error);
-                                alert('Une erreur est survenue lors de la mise à jour du post');
-                            });
-                    }
+                    document.getElementById('editPostId').value = post.id;
+                    document.getElementById('editUserId').value = post.user_id;
+                    document.getElementById('editPostContent').value = post.content;
+                    document.getElementById('editPostModal').style.display = 'block';
                 })
                 .catch(error => {
                     console.error('Erreur lors de la récupération du post:', error);
                     alert('Une erreur est survenue lors de la récupération du post');
+                });
+        }
+
+        function closeEditPostModal() {
+            document.getElementById('editPostModal').style.display = 'none';
+        }
+
+        function updatePost() {
+            const postId = document.getElementById('editPostId').value;
+            const userId = document.getElementById('editUserId').value;
+            const content = document.getElementById('editPostContent').value;
+
+            fetch('http://localhost:8181/post/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ postID: postId, userID: userId, content: content }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    closeEditPostModal();
+                    loadPosts(userId);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour du post:', error);
+                    alert('Une erreur est survenue lors de la mise à jour du post');
                 });
         }
 
@@ -244,11 +315,11 @@
                     });
             }
         }
-
     </script>
 </body>
 
 </html>
+
 
 <!-- <script>
     document.addEventListener("DOMContentLoaded", function () {

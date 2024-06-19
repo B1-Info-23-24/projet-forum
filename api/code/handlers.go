@@ -23,10 +23,11 @@ type Comment struct {
 }
 
 type UpdatePostRequest struct {
-	PostID  string `json:"id"`
-	UserID  string `json:"user_id"`
+	PostID  string `json:"postID"`
+	UserID  string `json:"userID"`
 	Content string `json:"content"`
 }
+
 
 type Post struct {
 	ID        int       `json:"id"`
@@ -129,32 +130,45 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 
 func updatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-		return
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
 	}
 
 	var req UpdatePostRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
 	}
 
+	log.Printf("Received PostID: %s, UserID: %s, Content: %s", req.PostID, req.UserID, req.Content)
+
 	if req.PostID == "" || req.UserID == "" || req.Content == "" {
-		http.Error(w, "L'ID du post, l'ID utilisateur et le contenu sont requis", http.StatusBadRequest)
-		return
+			http.Error(w, "L'ID du post, l'ID utilisateur et le contenu sont requis", http.StatusBadRequest)
+			return
 	}
 
 	stmt, err := db.Prepare("UPDATE posts SET content = ? WHERE id = ? AND user_id = ?")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(req.Content, req.PostID, req.UserID)
+	result, err := stmt.Exec(req.Content, req.PostID, req.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+	}
+
+	if rowsAffected == 0 {
+			http.Error(w, "Aucune mise à jour effectuée", http.StatusNotFound)
+			return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -272,6 +286,51 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+// func Login(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method == http.MethodOptions {
+// 			return
+// 	}
+
+// 	emailOrUsername := r.FormValue("emailOrUsername")
+// 	password := r.FormValue("password")
+
+// 	if emailOrUsername == "" || password == "" {
+// 			http.Error(w, "L'email/nom d'utilisateur et le mot de passe sont requis", http.StatusBadRequest)
+// 			return
+// 	}
+
+// 	var user User
+// 	var err error
+
+// 	// Vérifier si emailOrUsername est un email
+// 	if strings.Contains(emailOrUsername, "@") {
+// 			err = db.QueryRow("SELECT id, name, email, password FROM users WHERE email = ?", emailOrUsername).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+// 	} else {
+// 			// Sinon, considérer emailOrUsername comme un nom d'utilisateur
+// 			err = db.QueryRow("SELECT id, name, email, password FROM users WHERE name = ?", emailOrUsername).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+// 	}
+
+// 	if err != nil {
+// 			if err == sql.ErrNoRows {
+// 					http.Error(w, "Utilisateur non trouvé", http.StatusUnauthorized)
+// 			} else {
+// 					http.Error(w, err.Error(), http.StatusInternalServerError)
+// 			}
+// 			return
+// 	}
+
+// 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+// 	if err != nil {
+// 			http.Error(w, "Mot de passe incorrect", http.StatusUnauthorized)
+// 			return
+// 	}
+
+// 	// Envoyer une réponse JSON avec l'URL de redirection
+// 	redirectUrl := "/home?id=" + strconv.Itoa(user.ID)
+// 	response := map[string]string{"redirectUrl": redirectUrl}
+// 	w.Header().Set("Content-Type", "application/json")
+// 	json.NewEncoder(w).Encode(response)
+// }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
