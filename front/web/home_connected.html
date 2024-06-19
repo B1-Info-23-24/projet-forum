@@ -34,10 +34,43 @@
             margin: 5px 0;
         }
 
-        .like-btn {
+        .like-btn,
+        .comment-btn {
             margin-top: 10px;
             cursor: pointer;
             color: blue;
+            background: none;
+            border: none;
+            padding: 5px;
+            font-size: 16px;
+        }
+
+        .popup-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            z-index: 1000;
+        }
+
+        .popup-form textarea {
+            width: 100%;
+            height: 100px;
+        }
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
     </style>
 </head>
@@ -87,8 +120,7 @@
             <div class="ad">Bonjour je vend mon duke 790 de 2018 en très bon état prête à rouler, révision faite cher...</div>
             <div class="ad">Je vends une Suzuki GSR 750 en excellent état...</div>
             <div class="ad">SPEED TRIPLE 1050 avec ABS Mise en circulation 05/2015</div>
-            <div class="ad">Ktm 890 R avec le tech pack. Moto en parfait état, entretien 100% chez KTM. Révision récente.
-            </div>
+            <div class="ad">Ktm 890 R avec le tech pack. Moto en parfait état, entretien 100% chez KTM. Révision récente.</div>
             <div class="ad">Je vend ma KTM 690 SM-C R, pour passer sur un roadster.</div>
         </aside>
     </div>
@@ -102,12 +134,18 @@
             </p>
         </footer>
     </div>
-    <script>
-        // Fonction pour rafraîchir la page
-        function refreshPage() {
-            window.location.reload();
-        }
 
+    <!-- Popup form for comments -->
+    <div class="popup-overlay" id="popupOverlay"></div>
+    <div class="popup-form" id="popupForm">
+        <h2>Ajouter un commentaire</h2>
+        <textarea id="commentText"></textarea>
+        <br>
+        <button onclick="submitComment()">Envoyer</button>
+        <button onclick="closePopup()">Annuler</button>
+    </div>
+
+    <script>
         let user;
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
@@ -183,6 +221,8 @@
                             <p>${post.content}</p>
                             <span class="post-user">Posté par ${post.user_name}</span>
                             <span class="post-likes">Likes: ${post.likes}</span>
+                            <button class="like-btn" onclick="likePost(${post.id})">Like</button>
+                            <button class="comment-btn" onclick="openCommentForm(${post.id})">Commenter</button>
                             <div class="comments">
                                 <h3>Commentaires</h3>
                                 ${post.comments.map(comment => `
@@ -200,8 +240,153 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadPosts);
-    </script>
 
+        function refreshPage() {
+            location.reload();
+        }
+
+        function likePost(postId) {
+            // Ici vous pouvez ajouter une requête pour enregistrer le like dans votre base de données
+            alert('Vous avez aimé le post ' + postId);
+        }
+
+        function openCommentForm(postId) {
+            document.getElementById('popupOverlay').style.display = 'block';
+            document.getElementById('popupForm').style.display = 'block';
+            document.getElementById('popupForm').dataset.postId = postId;
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').style.display = 'none';
+            document.getElementById('popupForm').style.display = 'none';
+        }
+
+        function submitComment() {
+            const postId = document.getElementById('popupForm').dataset.postId;
+            const commentText = document.getElementById('commentText').value;
+
+            // Ici vous pouvez ajouter une requête pour enregistrer le commentaire dans votre base de données
+
+            closePopup();
+            alert('Commentaire ajouté au post ' + postId);
+        }
+
+        // Exemple de post pour illustration
+        const examplePosts = [
+            { id: 1, content: "Ceci est le contenu du post 1" },
+            { id: 2, content: "Ceci est le contenu du post 2" }
+        ];
+
+        const postsContainer = document.querySelector('.posts');
+
+        examplePosts.forEach(post => {
+            const postElement = document.createElement('div');
+            postElement.classList.add('post');
+            postElement.innerHTML = `
+                <p>${post.content}</p>
+                <button class="like-btn" onclick="likePost(${post.id})">Like</button>
+                <button class="comment-btn" onclick="openCommentForm(${post.id})">Commenter</button>
+                <div class="comments"></div>
+            `;
+            postsContainer.appendChild(postElement);
+        });
+    </script>
 </body>
 
 </html>
+
+
+<!-- <script>
+	let user;
+	const urlParams = new URLSearchParams(window.location.search);
+	const id = urlParams.get('id');
+	if (id != null) {
+		let profile = document.getElementById('profile');
+		profile.setAttribute('href', `/profile?id=${id}`);
+		fetch(`http://localhost:8181/getuserbyid?id=${id}`, {
+			method: 'GET',
+		})
+			.then(response => response.json())
+			.then(data => {
+				console.log(data);
+				user = data;
+				let username = document.getElementById('username');
+				username.append(user?.name);
+			})
+			.catch(error => console.error('Erreur:', error));
+	}
+
+	function createPost(event) {
+		event.preventDefault();
+
+		if (!user) {
+			alert('Erreur : utilisateur non trouvé.');
+			return;
+		}
+
+		const userID = user.id;
+		const content = document.querySelector('textarea[name="content"]').value;
+
+		const postData = {
+			user_id: userID,
+			content: content
+		};
+
+		fetch('http://localhost:8181/post/create', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(postData),
+		})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Erreur lors de la création du post');
+				}
+				return response.text();
+			})
+			.then(message => {
+				alert(message);
+				loadPosts();
+			})
+			.catch(error => {
+				console.error('Erreur:', error);
+				alert('Une erreur est survenue lors de la création du post');
+			});
+	}
+
+	document.getElementById('postForm').addEventListener('submit', createPost);
+
+	function loadPosts() {
+		fetch('http://localhost:8181/posts', {
+			method: 'GET',
+		})
+			.then(response => response.json())
+			.then(data => {
+				const postsContainer = document.querySelector('.posts');
+				postsContainer.innerHTML = '';
+				data.forEach(post => {
+					const postElement = document.createElement('div');
+					postElement.classList.add('post');
+					postElement.innerHTML = `
+												<p>${post.content}</p>
+												<span class="post-user">Posté par ${post.user_name}</span>
+												<span class="post-likes">Likes: ${post.likes}</span>
+												<div class="comments">
+														<h3>Commentaires</h3>
+														${post.comments.map(comment => `
+																<div class="comment">
+																		<span class="comment-user">${comment.user_name}:</span>
+																		<p>${comment.content}</p>
+																</div>
+														`).join('')}
+												</div>
+										`;
+					postsContainer.appendChild(postElement);
+				});
+			})
+			.catch(error => console.error('Erreur de chargement des posts:', error));
+	}
+
+	document.addEventListener('DOMContentLoaded', loadPosts);
+</script> -->

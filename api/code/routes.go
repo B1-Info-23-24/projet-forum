@@ -20,5 +20,6 @@ func SetupRoutes() {
 	http.HandleFunc("/user/posts", getUserPosts)
 	http.HandleFunc("/getpostbyid", getPostById)
 
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 }
