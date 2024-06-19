@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil</title>
+    <link rel="stylesheet" href="../static/profile.css">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Mon Profil</h1>
+        <form id="profileForm" action="/profile/update" method="post">
+            <input type="hidden" name="id" id="userId">
+            <div class="profile-section">
+                <label for="name">Pseudo</label>
+                <input type="text" id="name" name="name">
+            </div>
+            <div class="profile-section">
+                <label for="email">Adresse mail</label>
+                <input type="email" id="email" name="email">
+            </div>
+            <div class="profile-section">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" placeholder="Mot de passe">
+            </div>
+            <button type="submit" class="update-button">Valider</button>
+        </form>
+        <form id="deleteForm" action="/profile/delete" method="post">
+            <input type="hidden" name="id" id="deleteUserId">
+            <button type="submit" class="delete-button" onclick="redirect()">Supprimer mon compte</button>
+            <!-- <button type="submit" class="delete-button">Supprimer mon compte</button> -->
+        </form>
+        <!-- Modal for Editing Post -->
+        <div id="editPostModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <form id="editPostForm">
+                    <input type="hidden" id="editPostId">
+                    <input type="hidden" id="editUserId">
+                    <label for="editPostContent">Contenu du Post:</label>
+                    <textarea id="editPostContent" rows="4" cols="50"></textarea>
+                    <button type="submit">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="posts"></div>
+    </div>
+
+    <script>
+        function redirect() {
+            window.location.href = 'http://localhost:8080/';
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('id');
+
+            if (userId) {
+                console.log("User ID from URL:", userId);
+                fetch(`http://localhost:8181/getuserbyid?id=${userId}`, {
+                    method: 'GET',
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Data fetched:", data);
+                        document.getElementById('userId').value = data.id;
+                        document.getElementById('deleteUserId').value = data.id;
+                        document.getElementById('name').value = data.name;
+                        document.getElementById('email').value = data.email;
+
+                        loadPosts(data.id);
+                    })
+                    .catch(error => console.error('Erreur lors de la récupération des données utilisateur:', error));
+            }
+
+            const profileForm = document.getElementById('profileForm');
+            profileForm.addEventListener('submit', updateProfile);
+
+            const deleteForm = document.getElementById('deleteForm');
+            deleteForm.addEventListener('submit', deleteProfile);
+
+            document.getElementById('editPostForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                updatePost();
+            });
+
+            document.querySelector('.close').addEventListener('click', function () {
+                closeEditPostModal();
+            });
+
+            window.onclick = function (event) {
+                if (event.target == document.getElementById('editPostModal')) {
+                    closeEditPostModal();
+                }
+            };
+        });
+
+        function updateProfile(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('userId').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            console.log("Updating profile with:", { id, name, email, password });
+
+            fetch('http://localhost:8181/profile/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, name, email, password }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Update response:", data);
+                    alert(data.message);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour du profil:', error);
+                    alert('Une erreur est survenue lors de la mise à jour du profil');
+                });
+        }
+
+        function deleteProfile(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('deleteUserId').value;
+
+            console.log("Deleting profile with ID:", id);
+
+            fetch('http://localhost:8181/profile/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: id }),
+            })
+                .then(response => {
+                    console.log("Raw delete response:", response);
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text) });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Delete response:", data);
+                    alert(data.message);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la suppression du compte:', error);
+                    alert('Une erreur est survenue lors de la suppression du compte: ' + error.message);
+                });
+        }
+
+        function loadPosts(userId) {
+            fetch(`http://localhost:8181/user/posts?userId=${userId}`, {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const postsContainer = document.querySelector('.posts');
+                    postsContainer.innerHTML = '';
+                    data.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.classList.add('post');
+                        postElement.innerHTML = `
+                <p>${post.content}</p>
+                <span class="post-user">Posté par ${post.user_name}</span>
+                <span class="post-likes">Likes: ${post.likes}</span>
+                <div class="comments">
+                    <h3>Commentaires</h3>
+                    ${post.comments && post.comments.length > 0 ? post.comments.map(comment => `
+                        <div class="comment">
+                            <span class="comment-user">${comment.user_name}:</span>
+                            <p>${comment.content}</p>
+                        </div>
+                    `).join('') : '<p>Aucun commentaire pour ce post.</p>'}
+                </div>
+                <button class="edit-post-button" data-post-id="${post.id}">Modifier</button>
+                <button class="delete-post-button" data-post-id="${post.id}">Supprimer</button>
+            `;
+                        postsContainer.appendChild(postElement);
+                    });
+
+                    document.querySelectorAll('.edit-post-button').forEach(button => {
+                        button.addEventListener('click', function () {
+                            const postId = this.dataset.postId;
+                            openEditPostModal(postId);
+                        });
+                    });
+
+                    document.querySelectorAll('.delete-post-button').forEach(button => {
+                        button.addEventListener('click', deletePost);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur de chargement des posts:', error);
+                    alert('Une erreur est survenue lors du chargement des posts');
+                });
+        }
+
+        function openEditPostModal(postId) {
+            fetch(`http://localhost:8181/getpostbyid?id=${postId}`, {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(post => {
+                    document.getElementById('editPostId').value = post.id;
+                    document.getElementById('editUserId').value = post.user_id;
+                    document.getElementById('editPostContent').value = post.content;
+                    document.getElementById('editPostModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération du post:', error);
+                    alert('Une erreur est survenue lors de la récupération du post');
+                });
+        }
+
+        function closeEditPostModal() {
+            document.getElementById('editPostModal').style.display = 'none';
+        }
+
+        function updatePost() {
+            const postId = document.getElementById('editPostId').value;
+            const userId = document.getElementById('editUserId').value;
+            const content = document.getElementById('editPostContent').value;
+
+            fetch('http://localhost:8181/post/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ postID: postId, userID: userId, content: content }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    closeEditPostModal();
+                    loadPosts(userId);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour du post:', error);
+                    alert('Une erreur est survenue lors de la mise à jour du post');
+                });
+        }
+
+        function deletePost(event) {
+            const postId = event.target.dataset.postId;
+
+            if (confirm("Êtes-vous sûr de vouloir supprimer ce post?")) {
+                const userId = document.getElementById('userId').value;
+                fetch('http://localhost:8181/post/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: postId, user_id: userId }),
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => { throw new Error(text) });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Post deleted:", data);
+                        alert('Le post a été supprimé');
+                        loadPosts(userId);
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la suppression du post:', error);
+                        alert('Une erreur est survenue lors de la suppression du post');
+                    });
+            }
+        }
+    </script>
+</body>
+
+</html>
+
+
+<!-- <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        if (userId) {
+            console.log("User ID from URL:", userId);
+            fetch(`http://localhost:8181/getuserbyid?id=${userId}`, {
+                method: 'GET',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Data fetched:", data);
+                document.getElementById('userId').value = data.id;
+                document.getElementById('deleteUserId').value = data.id;
+                document.getElementById('name').value = data.name;
+                document.getElementById('email').value = data.email;
+
+                loadPosts(data.id);
+            })
+            .catch(error => console.error('Erreur lors de la récupération des données utilisateur:', error));
+        }
+
+        const profileForm = document.getElementById('profileForm');
+        profileForm.addEventListener('submit', updateProfile);
+
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.addEventListener('submit', deleteProfile);
+    });
+
+    function updateProfile(event) {
+        event.preventDefault();
+        
+        const id = document.getElementById('userId').value;
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        console.log("Updating profile with:", { id, name, email, password });
+
+        fetch('http://localhost:8181/profile/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id, name, email, password }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Update response:", data);
+            alert(data.message);
+        })
+        .catch(error => {
+            console.error('Erreur lors de la mise à jour du profil:', error);
+            alert('Une erreur est survenue lors de la mise à jour du profil');
+        });
+    }
+
+    function deleteProfile(event) {
+event.preventDefault();
+
+const id = document.getElementById('deleteUserId').value;
+
+console.log("Deleting profile with ID:", id);
+
+fetch('http://localhost:8181/profile/delete', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: id }),
+})
+.then(response => {
+    console.log("Raw delete response:", response);
+    if (!response.ok) {
+        return response.text().then(text => { throw new Error(text) });
+    }
+    return response.json();
+})
+.then(data => {
+    console.log("Delete response:", data);
+    alert(data.message);
+})
+.catch(error => {
+    console.error('Erreur lors de la suppression du compte:', error);
+    alert('Une erreur est survenue lors de la suppression du compte: ' + error.message);
+});
+}
+
+    function loadPosts(userId) {
+        fetch(`http://localhost:8181/user/posts?userId=${userId}`, {
+            method: 'GET',
+        })
+        .then(response => response.json())
+        .then(data => {
+            const postsContainer = document.querySelector('.posts');
+            postsContainer.innerHTML = '';
+            data.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.classList.add('post');
+                postElement.innerHTML = `
+                    <p>${post.content}</p>
+                    <span class="post-user">Posté par ${post.user_name}</span>
+                    <span class="post-likes">Likes: ${post.likes}</span>
+                    <div class="comments">
+                        <h3>Commentaires</h3>
+                        ${post.comments && post.comments.length > 0 ? post.comments.map(comment => `
+                            <div class="comment">
+                                <span class="comment-user">${comment.user_name}:</span>
+                                <p>${comment.content}</p>
+                            </div>
+                        `).join('') : '<p>Aucun commentaire pour ce post.</p>'}
+                    </div>
+                `;
+                postsContainer.appendChild(postElement);
+            });
+        })
+        .catch(error => {
+            console.error('Erreur de chargement des posts:', error);
+            alert('Une erreur est survenue lors du chargement des posts');
+        });
+    }
+</script> -->

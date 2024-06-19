@@ -1,0 +1,92 @@
+/* register.css */
+
+/* Styles généraux */
+body {
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    background-color: #666666;
+    border: 2px solid #f39c12;
+    border-radius: 15px;
+    padding: 40px;
+    width: 400px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    color: #fff;
+    font-size: 24px;
+    margin: 0;
+    height: 10px;
+    width: 250px;
+    border-radius: 50%;
+}
+
+.header .back-button {
+    font-size: 24px;
+    color: #fff;
+    text-decoration: none;
+    height: 100px;
+    width: 30px;
+    border-radius: 50%;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    color: #fff;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.button {
+    width: calc(100% - 20px); /* Prend la largeur du conteneur moins les paddings */
+    padding: 10px; /* Définit le padding */
+    border: none;
+    border-radius: 5px;
+    background-color: #444;
+    color: #ccc;
+    font-size: 16px;
+    box-sizing: border-box; /* Inclut le padding et la bordure dans la largeur */
+}
+
+.form-group input::placeholder {
+    color: #888;
+}
+
+.form-text {
+    color: #ccc;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Styles des boutons */
+.button {
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    margin-right: 5px;
+    margin-top: 20px; /* Ajoute un espace entre le bouton et le champ de formulaire */
+}
+
+.button:last-child {
+    margin-right: 0; /* Réinitialise la marge à droite pour le dernier bouton */
+}

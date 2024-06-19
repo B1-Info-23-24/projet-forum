@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Motorum - Accueil</title>
+	<link rel="stylesheet" href="../static/home.css">
+	<style>
+		.post {
+			border: 1px solid #870d0d;
+			margin-bottom: 20px;
+			padding: 10px;
+		}
+
+		.comments {
+			margin-top: 10px;
+			padding-top: 10px;
+			border-top: 1px solid black;
+		}
+
+		.comment-form {
+			margin-top: 10px;
+		}
+
+		.comment {
+			margin-bottom: 10px;
+			padding: 5px;
+			border: 1px solid #32bb10;
+			background-color: #9bb442;
+		}
+
+		.comment p {
+			margin: 5px 0;
+			color: black;
+		}
+
+		.like-btn,
+		.comment-btn {
+			margin-top: 10px;
+			cursor: pointer;
+			color: blue;
+			background: none;
+			border: none;
+			padding: 5px;
+			font-size: 16px;
+		}
+
+		.popup-form {
+			display: none;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background-color: rgb(248, 7, 7);
+			padding: 20px;
+			border: 1px solid #3b10c9;
+			z-index: 1000;
+		}
+
+		.popup-form textarea {
+			width: 100%;
+			height: 100px;
+		}
+
+		.popup-overlay {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 999;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<aside class="sidebar">
+			<div class="logo">Motorum</div>
+			<div class="sections">
+				<div class="section active">Les plus récents</div>
+				<div class="section">Populaire du jour</div>
+				<div class="section">Abonnement</div>
+			</div>
+			<div class="tags">
+				<h2>Tags populaires</h2>
+				<div class="tag">#LeBoncoin</div>
+				<div class="tag">#Budget 10K</div>
+				<div class="tag">#Budget 5K</div>
+				<div class="tag">#Supermot</div>
+				<div class="tag">#MotoGP</div>
+				<div class="tag">#BMW</div>
+			</div>
+			<div class="pinned-group">Groupe épinglé</div>
+		</aside>
+		<main class="content">
+			<div class="top-bar">
+				<button class="profile-button" onclick="refreshPage()">Rafraîchir</button>
+				<div class="user-info">
+					<p class="welcome-message"><span id="username"></span></p>
+					<a href="#" id="profile" class="button">Profil</a>
+					<button class="profile-button" onclick="location.href='/logout'">Déconnexion</button>
+				</div>
+			</div>
+			<form id="postForm">
+				<label for="content">Contenu :</label>
+				<textarea name="content" id="content" required></textarea>
+				<br>
+				<button class="profile-button" type="submit">Créer Post</button>
+			</form>
+			<div class="posts">
+				<!-- Les posts seront chargés ici -->
+			</div>
+		</main>
+		<aside class="sidebar-right">
+			<h2>Leboncoin top annonce</h2>
+			<div class="ad">Bonjour je vends ma moto, un Z800 abs de 2016 que j'ai bridé car je suis encore...</div>
+			<div class="ad">Bonjour je vend mon duke 790 de 2018 en très bon état prête à rouler, révision faite cher...</div>
+			<div class="ad">Je vends une Suzuki GSR 750 en excellent état...</div>
+			<div class="ad">SPEED TRIPLE 1050 avec ABS Mise en circulation 05/2015</div>
+			<div class="ad">Ktm 890 R avec le tech pack. Moto en parfait état, entretien 100% chez KTM. Révision récente.
+			</div>
+			<div class="ad">Je vend ma KTM 690 SM-C R, pour passer sur un roadster.</div>
+		</aside>
+	</div>
+	<div class="footer-container">
+		<footer class="footer">
+			<p>© 2024 Motorum. Tous droits réservés.</p>
+			<p>
+				<a href="#">Politique de confidentialité</a> |
+				<a href="#">Conditions d'utilisation</a> |
+				<a href="#">Contactez-nous</a>
+			</p>
+		</footer>
+	</div>
+
+	<!-- Popup form for comments -->
+	<div class="popup-overlay" id="popupOverlay"></div>
+	<div class="popup-form" id="popupForm">
+		<h2>Ajouter un commentaire</h2>
+		<textarea id="commentText"></textarea>
+		<br>
+		<button onclick="submitComment()">Envoyer</button>
+		<button onclick="closePopup()">Annuler</button>
+	</div>
+
+	<script>
+		let user;
+		const urlParams = new URLSearchParams(window.location.search);
+		const id = urlParams.get('id');
+		if (id != null) {
+			let profile = document.getElementById('profile');
+			profile.setAttribute('href', `/profile?id=${id}`);
+			fetch(`http://localhost:8181/getuserbyid?id=${id}`, {
+				method: 'GET',
+			})
+				.then(response => response.json())
+				.then(data => {
+					console.log(data);
+					user = data;
+					let username = document.getElementById('username');
+					username.append(user?.name);
+				})
+				.catch(error => console.error('Erreur:', error));
+		}
+
+		function createPost(event) {
+			event.preventDefault();
+
+			if (!user) {
+				alert('Erreur : utilisateur non trouvé.');
+				return;
+			}
+
+			const userID = user.id;
+			const content = document.querySelector('textarea[name="content"]').value;
+
+			const postData = {
+				user_id: userID,
+				content: content
+			};
+
+			fetch('http://localhost:8181/post/create', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(postData),
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Erreur lors de la création du post');
+					}
+					return response.text();
+				})
+				.then(message => {
+					alert(message);
+					loadPosts();
+				})
+				.catch(error => {
+					console.error('Erreur:', error);
+					alert('Une erreur est survenue lors de la création du post');
+				});
+		}
+
+		document.getElementById('postForm').addEventListener('submit', createPost);
+
+		function loadPosts() {
+			fetch('http://localhost:8181/posts', {
+				method: 'GET',
+			})
+				.then(response => response.json())
+				.then(data => {
+					const postsContainer = document.querySelector('.posts');
+					postsContainer.innerHTML = '';
+					data.forEach(post => {
+						// Convertir la date du post en un objet Date
+						const postDate = new Date(post.created_at);
+
+						// Formater la date au format jour/mois/année
+						const formattedDate = `${postDate.getDate()}/${postDate.getMonth() + 1}/${postDate.getFullYear()}`;
+
+						const postElement = document.createElement('div');
+						postElement.classList.add('post');
+						postElement.innerHTML = `
+                    <p>${post.content}</p>
+                    <span class="post-user">Posté par ${post.user_name}</span>
+                    <span class="post-date">Date: ${formattedDate}</span> <!-- Affichage de la date -->
+                    <span class="post-likes">Likes: ${post.likes}</span>
+                    <button class="like-btn" onclick="likePost(${post.id})">Like</button>
+                    <button class="comment-btn" onclick="openCommentForm(${post.id})">Commenter</button>
+                    <div class="comments">
+                        <h3>Commentaires</h3>
+                        ${post.comments.map(comment => `
+                            <div class="comment">
+                                <span class="comment-user">${comment.user_name}:</span>
+                                <p>${comment.content}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+						postsContainer.appendChild(postElement);
+					});
+				})
+				.catch(error => console.error('Erreur de chargement des posts:', error));
+		}
+
+		document.addEventListener('DOMContentLoaded', loadPosts);
+
+		function refreshPage() {
+			location.reload();
+		}
+
+		function likePost(postId) {
+			if (!user) {
+				alert('Erreur : utilisateur non trouvé.');
+				return;
+			}
+
+			const userID = user.id;
+
+			const likeData = new FormData();
+			likeData.append("post_id", postId);
+			likeData.append("user_id", userID);
+
+			fetch('http://localhost:8181/post/like', {
+				method: 'POST',
+				body: likeData,
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Erreur lors de l\'ajout du like');
+					}
+					return response.text();
+				})
+				.then(message => {
+					alert(message);
+					// Recharger les posts après avoir ajouté le like
+					loadPosts();
+				})
+				.catch(error => {
+					console.error('Erreur:', error);
+					alert('Une erreur est survenue lors de l\'ajout du like');
+				});
+		}
+
+		function openCommentForm(postId) {
+			document.getElementById('popupOverlay').style.display = 'block';
+			document.getElementById('popupForm').style.display = 'block';
+			document.getElementById('popupForm').dataset.postId = postId;
+		}
+
+		function closePopup() {
+			document.getElementById('popupOverlay').style.display = 'none';
+			document.getElementById('popupForm').style.display = 'none';
+		}
+
+		function submitComment() {
+			const postId = document.getElementById('popupForm').dataset.postId;
+			const commentText = document.getElementById('commentText').value;
+
+			if (!user) {
+				alert('Erreur : utilisateur non trouvé.');
+				return;
+			}
+
+			const userID = user.id;
+
+			const commentData = new FormData();
+			commentData.append("post_id", postId);
+			commentData.append("user_id", userID);
+			commentData.append("content", commentText);
+
+			fetch('http://localhost:8181/post/comment', {
+				method: 'POST',
+				body: commentData,
+			})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Erreur lors de l\'ajout du commentaire');
+					}
+					return response.text();
+				})
+				.then(message => {
+					alert(message);
+					// Recharger les posts après avoir ajouté le commentaire
+					loadPosts();
+					closePopup(); // Fermer le formulaire de commentaire
+				})
+				.catch(error => {
+					console.error('Erreur:', error);
+					alert('Une erreur est survenue lors de l\'ajout du commentaire');
+				});
+		}
+	</script>
+</body>
+
+</html>
+
+<!-- 
+function loadPosts() {
+	fetch('http://localhost:8181/posts', {
+			method: 'GET',
+	})
+			.then(response => response.json())
+			.then(data => {
+					const postsContainer = document.querySelector('.posts');
+					postsContainer.innerHTML = '';
+					data.forEach(post => {
+							const postElement = document.createElement('div');
+							postElement.classList.add('post');
+							postElement.innerHTML = `
+									<p>${post.content}</p>
+									<span class="post-user">Posté par ${post.user_name}</span>
+									<span class="post-likes">Likes: ${post.likes}</span>
+									<button class="like-btn" onclick="likePost(${post.id})">Like</button>
+									<button class="comment-btn" onclick="openCommentForm(${post.id})">Commenter</button>
+									<div class="comments">
+											<h3>Commentaires</h3>
+											${post.comments.map(comment => `
+													<div class="comment">
+															<span class="comment-user">${comment.user_name}:</span>
+															<p>${comment.content}</p>
+													</div>
+											`).join('')}
+									</div>
+							`;
+							postsContainer.appendChild(postElement);
+					});
+			})
+			.catch(error => console.error('Erreur de chargement des posts:', error));
+}
+
+document.addEventListener('DOMContentLoaded', loadPosts); -->
