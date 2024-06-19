@@ -15,6 +15,7 @@ func SetupRoutes() {
 	http.HandleFunc("/post/update", updatePost)
 	http.HandleFunc("/post/delete", deletePost)
 	http.HandleFunc("/post/like", likePost)
+	http.HandleFunc("/post/dislike", dislikePost)
 	http.HandleFunc("/post/comment", commentPost)
 	http.HandleFunc("/posts", getPosts)
 	http.HandleFunc("/user/posts", getUserPosts)

@@ -9,7 +9,6 @@ import (
 
 var db *sql.DB
 
-// Connect initialise la connexion à la base de données SQLite
 func Connect() *sql.DB {
 	var err error
 	db, err = sql.Open("sqlite3", "./base.db")
@@ -23,14 +22,12 @@ func Connect() *sql.DB {
 		log.Default().Println("erreur ping db")
 		log.Fatal(err)
 	}
-
-	// Exécuter les migrations au démarrage
+	
 	RunMigrations(db)
 
 	return db
 }
 
-// RunMigrations exécute les migrations pour créer les tables nécessaires
 func RunMigrations(db *sql.DB) {
 	createUsersTable := `
 	CREATE TABLE IF NOT EXISTS users (
@@ -47,11 +44,22 @@ func RunMigrations(db *sql.DB) {
 		user_id INTEGER NOT NULL,
 		content TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		likes INTEGER DEFAULT 0
+		likes INTEGER DEFAULT 0,
+		dislikes INTEGER DEFAULT 0 -- Ajout de la colonne dislikes
 	);
 	`
 	createLikesTable := `
 	CREATE TABLE IF NOT EXISTS likes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		post_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
+		FOREIGN KEY (post_id) REFERENCES posts(id),
+		FOREIGN KEY (user_id) REFERENCES users(id)
+	);
+	`
+
+	createDislikesTable := `
+	CREATE TABLE IF NOT EXISTS dislikes (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		post_id INTEGER NOT NULL,
 		user_id INTEGER NOT NULL,
@@ -71,8 +79,7 @@ func RunMigrations(db *sql.DB) {
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	);
 	`
-
-	// Exécute les requêtes de création de tables
+	
 	_, err := db.Exec(createUsersTable)
 	if err != nil {
 		log.Fatalf("Erreur lors de la création de la table users: %v", err)
@@ -86,6 +93,11 @@ func RunMigrations(db *sql.DB) {
 	_, err = db.Exec(createLikesTable)
 	if err != nil {
 		log.Fatalf("Erreur lors de la création de la table likes: %v", err)
+	}
+
+	_, err = db.Exec(createDislikesTable)
+	if err != nil {
+		log.Fatalf("Erreur lors de la création de la table dislikes: %v", err)
 	}
 
 	_, err = db.Exec(createCommentsTable)
