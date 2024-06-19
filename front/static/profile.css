@@ -12,6 +12,50 @@ body {
     border-radius: 10px;
 }
 
+/* CSS pour les posts et commentaires */
+.post {
+    background-color: #444444;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.post p {
+    margin-bottom: 10px;
+}
+
+.post-user {
+    color: #6cb2eb;
+    font-size: 14px;
+}
+
+.post-likes {
+    color: #a8a8a8;
+    font-size: 12px;
+}
+
+.comments {
+    margin-top: 10px;
+}
+
+.comment {
+    background-color: #555555;
+    border-radius: 5px;
+    padding: 5px;
+    margin-top: 5px;
+}
+
+.comment-user {
+    color: #6cb2eb;
+    font-size: 12px;
+}
+
+.comment p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+
 h1 {
     text-align: center;
 }

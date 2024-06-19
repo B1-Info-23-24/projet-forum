@@ -6,6 +6,40 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Motorum - Accueil</title>
 	<link rel="stylesheet" href="../static/home.css">
+	<style>
+		.post {
+			border: 1px solid #ccc;
+			margin-bottom: 20px;
+			padding: 10px;
+		}
+
+		.comments {
+			margin-top: 10px;
+			padding-top: 10px;
+			border-top: 1px solid #eee;
+		}
+
+		.comment-form {
+			margin-top: 10px;
+		}
+
+		.comment {
+			margin-bottom: 10px;
+			padding: 5px;
+			border: 1px solid #e0e0e0;
+			background-color: #f9f9f9;
+		}
+
+		.comment p {
+			margin: 5px 0;
+		}
+
+		.like-btn {
+			margin-top: 10px;
+			cursor: pointer;
+			color: blue;
+		}
+	</style>
 </head>
 
 <body>
@@ -44,8 +78,19 @@
 				<button type="submit">Créer Post</button>
 			</form>
 			<div class="posts">
+				<form class="comment-form">
+					<input type="hidden" name="post_id" value="1">
+					<textarea name="comment" placeholder="Ajouter un commentaire..." required></textarea>
+					<button type="submit">Ajouter</button>
+				</form>
 				<!-- Les posts seront chargés ici -->
 			</div>
+			<form class="comment-form">
+				<input type="hidden" name="post_id" value="1">
+				<textarea name="comment" placeholder="Ajouter un commentaire..." required></textarea>
+				<button type="submit">Ajouter</button>
+			</form>
+
 		</main>
 		<aside class="sidebar-right">
 			<h2>Leboncoin top annonce</h2>
@@ -129,17 +174,17 @@
 
 		document.getElementById('postForm').addEventListener('submit', createPost);
 		function loadPosts() {
-    fetch('http://localhost:8181/posts', {
-      method: 'GET',
-    })
-    .then(response => response.json())
-    .then(data => {
-      const postsContainer = document.querySelector('.posts');
-      postsContainer.innerHTML = '';
-      data.forEach(post => {
-        const postElement = document.createElement('div');
-        postElement.classList.add('post');
-        postElement.innerHTML = `
+			fetch('http://localhost:8181/posts', {
+				method: 'GET',
+			})
+				.then(response => response.json())
+				.then(data => {
+					const postsContainer = document.querySelector('.posts');
+					postsContainer.innerHTML = '';
+					data.forEach(post => {
+						const postElement = document.createElement('div');
+						postElement.classList.add('post');
+						postElement.innerHTML = `
           <p>${post.content}</p>
           <span class="post-user">Posté par ${post.user_name}</span>
           <span class="post-likes">Likes: ${post.likes}</span>
@@ -153,13 +198,13 @@
             `).join('')}
           </div>
         `;
-        postsContainer.appendChild(postElement);
-      });
-    })
-    .catch(error => console.error('Erreur de chargement des posts:', error));
-  }
+						postsContainer.appendChild(postElement);
+					});
+				})
+				.catch(error => console.error('Erreur de chargement des posts:', error));
+		}
 
-  document.addEventListener('DOMContentLoaded', loadPosts);
+		document.addEventListener('DOMContentLoaded', loadPosts);
 	</script>
 
 </body>

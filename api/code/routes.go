@@ -17,6 +17,8 @@ func SetupRoutes() {
 	http.HandleFunc("/post/like", likePost)
 	http.HandleFunc("/post/comment", commentPost)
 	http.HandleFunc("/posts", getPosts)
+	http.HandleFunc("/user/posts", getUserPosts)
+	http.HandleFunc("/getpostbyid", getPostById)
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 }
