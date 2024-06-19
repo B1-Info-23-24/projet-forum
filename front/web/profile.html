@@ -29,11 +29,18 @@
         </form>
         <form id="deleteForm" action="/profile/delete" method="post">
             <input type="hidden" name="id" id="deleteUserId">
-            <button type="submit" class="delete-button">Supprimer mon compte</button>
+            <button type="submit" class="delete-button" onclick="redirect()">Supprimer mon compte</button>
+            <!-- <button type="submit" class="delete-button">Supprimer mon compte</button> -->
         </form>
 
         <div class="posts"></div>
     </div>
+
+    <script>
+    function redirect() {
+        window.location.href = 'http://localhost:8080/';
+    }
+    </script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

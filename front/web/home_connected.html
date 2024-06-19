@@ -165,46 +165,46 @@
                 .catch(error => console.error('Erreur:', error));
         }
 
-        function createPost(event) {
-            event.preventDefault();
+				function createPost(event) {
+		event.preventDefault();
 
-            if (!user) {
-                alert('Erreur : utilisateur non trouvé.');
-                return;
-            }
+		if (!user) {
+			alert('Erreur : utilisateur non trouvé.');
+			return;
+		}
 
-            const userID = user.id;
-            const content = document.querySelector('textarea[name="content"]').value;
+		const userID = user.id;
+		const content = document.querySelector('textarea[name="content"]').value;
 
-            const postData = {
-                user_id: userID,
-                content: content
-            };
+		const postData = {
+			user_id: userID,
+			content: content
+		};
 
-            fetch('http://localhost:8181/post/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(postData),
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erreur lors de la création du post');
-                    }
-                    return response.text();
-                })
-                .then(message => {
-                    alert(message);
-                    loadPosts();
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert('Une erreur est survenue lors de la création du post');
-                });
-        }
+		fetch('http://localhost:8181/post/create', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(postData),
+		})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Erreur lors de la création du post');
+				}
+				return response.text();
+			})
+			.then(message => {
+				alert(message);
+				loadPosts();
+			})
+			.catch(error => {
+				console.error('Erreur:', error);
+				alert('Une erreur est survenue lors de la création du post');
+			});
+	}
 
-        document.getElementById('postForm').addEventListener('submit', createPost);
+	document.getElementById('postForm').addEventListener('submit', createPost);
 
         function loadPosts() {
             fetch('http://localhost:8181/posts', {
@@ -246,8 +246,36 @@
         }
 
         function likePost(postId) {
-            // Ici vous pouvez ajouter une requête pour enregistrer le like dans votre base de données
-            alert('Vous avez aimé le post ' + postId);
+            if (!user) {
+                alert('Erreur : utilisateur non trouvé.');
+                return;
+            }
+
+            const userID = user.id;
+
+            const likeData = new FormData();
+            likeData.append("post_id", postId);
+            likeData.append("user_id", userID);
+
+            fetch('http://localhost:8181/post/like', {
+                method: 'POST',
+                body: likeData,
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de l\'ajout du like');
+                    }
+                    return response.text();
+                })
+                .then(message => {
+                    alert(message);
+                    // Recharger les posts après avoir ajouté le like
+                    loadPosts();
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue lors de l\'ajout du like');
+                });
         }
 
         function openCommentForm(postId) {
@@ -265,21 +293,50 @@
             const postId = document.getElementById('popupForm').dataset.postId;
             const commentText = document.getElementById('commentText').value;
 
-            // Ici vous pouvez ajouter une requête pour enregistrer le commentaire dans votre base de données
+            if (!user) {
+                alert('Erreur : utilisateur non trouvé.');
+                return;
+            }
 
-            closePopup();
-            alert('Commentaire ajouté au post ' + postId);
+            const userID = user.id;
+
+            const commentData = new FormData();
+            commentData.append("post_id", postId);
+            commentData.append("user_id", userID);
+            commentData.append("content", commentText);
+
+            fetch('http://localhost:8181/post/comment', {
+                method: 'POST',
+                body: commentData,
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de l\'ajout du commentaire');
+                    }
+                    return response.text();
+                })
+                .then(message => {
+                    alert(message);
+                    // Recharger les posts après avoir ajouté le commentaire
+                    loadPosts();
+                    closePopup(); // Fermer le formulaire de commentaire
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue lors de l\'ajout du commentaire');
+                });
         }
 
         // Exemple de post pour illustration
-        const examplePosts = [
+        /*
+        const posts = [
             { id: 1, content: "Ceci est le contenu du post 1" },
             { id: 2, content: "Ceci est le contenu du post 2" }
         ];
 
         const postsContainer = document.querySelector('.posts');
 
-        examplePosts.forEach(post => {
+        posts.forEach(post => {
             const postElement = document.createElement('div');
             postElement.classList.add('post');
             postElement.innerHTML = `
@@ -290,103 +347,8 @@
             `;
             postsContainer.appendChild(postElement);
         });
+        */
     </script>
 </body>
 
 </html>
-
-
-<!-- <script>
-	let user;
-	const urlParams = new URLSearchParams(window.location.search);
-	const id = urlParams.get('id');
-	if (id != null) {
-		let profile = document.getElementById('profile');
-		profile.setAttribute('href', `/profile?id=${id}`);
-		fetch(`http://localhost:8181/getuserbyid?id=${id}`, {
-			method: 'GET',
-		})
-			.then(response => response.json())
-			.then(data => {
-				console.log(data);
-				user = data;
-				let username = document.getElementById('username');
-				username.append(user?.name);
-			})
-			.catch(error => console.error('Erreur:', error));
-	}
-
-	function createPost(event) {
-		event.preventDefault();
-
-		if (!user) {
-			alert('Erreur : utilisateur non trouvé.');
-			return;
-		}
-
-		const userID = user.id;
-		const content = document.querySelector('textarea[name="content"]').value;
-
-		const postData = {
-			user_id: userID,
-			content: content
-		};
-
-		fetch('http://localhost:8181/post/create', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(postData),
-		})
-			.then(response => {
-				if (!response.ok) {
-					throw new Error('Erreur lors de la création du post');
-				}
-				return response.text();
-			})
-			.then(message => {
-				alert(message);
-				loadPosts();
-			})
-			.catch(error => {
-				console.error('Erreur:', error);
-				alert('Une erreur est survenue lors de la création du post');
-			});
-	}
-
-	document.getElementById('postForm').addEventListener('submit', createPost);
-
-	function loadPosts() {
-		fetch('http://localhost:8181/posts', {
-			method: 'GET',
-		})
-			.then(response => response.json())
-			.then(data => {
-				const postsContainer = document.querySelector('.posts');
-				postsContainer.innerHTML = '';
-				data.forEach(post => {
-					const postElement = document.createElement('div');
-					postElement.classList.add('post');
-					postElement.innerHTML = `
-												<p>${post.content}</p>
-												<span class="post-user">Posté par ${post.user_name}</span>
-												<span class="post-likes">Likes: ${post.likes}</span>
-												<div class="comments">
-														<h3>Commentaires</h3>
-														${post.comments.map(comment => `
-																<div class="comment">
-																		<span class="comment-user">${comment.user_name}:</span>
-																		<p>${comment.content}</p>
-																</div>
-														`).join('')}
-												</div>
-										`;
-					postsContainer.appendChild(postElement);
-				});
-			})
-			.catch(error => console.error('Erreur de chargement des posts:', error));
-	}
-
-	document.addEventListener('DOMContentLoaded', loadPosts);
-</script> -->
