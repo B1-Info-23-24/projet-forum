@@ -42,6 +42,54 @@
 
 </body>
 <script>
+    function validatePassword(password) {
+        const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        return passwordPattern.test(password);
+    }
+
+    function registerUser(event) {
+        event.preventDefault();
+
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+       
+        if (!validatePassword(password)) {
+            alert('Le mot de passe ne respecte pas les critères : au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            alert('Les mots de passe ne correspondent pas.');
+            return;
+        }
+
+        const formData = new FormData(document.getElementById('registerForm'));
+
+        fetch('http://localhost:8181/users/create', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log(response);
+            if (response.ok) {
+                alert('Inscription réussie');
+                window.location.href = "/login"; 
+            } else {
+                response.text().then(text => {
+                    alert('Erreur lors de l\'inscription : ' + text);
+                });
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', registerUser);
+</script>
+
+
+</html>
+
+<!-- <script>
     function registerUser(event) {
         event.preventDefault();
         const formData = new FormData(document.getElementById('registerForm'));
@@ -64,5 +112,4 @@
     }
 
     document.getElementById('registerForm').addEventListener('submit', registerUser);
-</script>
-</html>
+</script> -->
